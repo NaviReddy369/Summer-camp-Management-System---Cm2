@@ -1,5 +1,8 @@
 node_modules/
 backend/camp.db
+backend/camp.db-shm
+backend/camp.db-wal
 dist/
 .env
 *.log
+.vercel

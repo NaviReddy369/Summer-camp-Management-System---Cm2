@@ -50,34 +50,49 @@ npm run dev
 
 - **Frontend**: React 18 + Vite
 - **Backend**: Node.js + Express
-- **Database**: SQLite (via better-sqlite3) — file-based, no setup needed
+- **Database**: SQLite (local dev) / Vercel Postgres (production)
 - **Auth**: JWT tokens (stored in localStorage)
 - **Styling**: Plain CSS with CSS variables, Google Fonts (Baloo 2 + Nunito)
 - **Icons**: Lucide React
+- **Deployment**: Vercel (frontend static + Express serverless function)
+
+## Deploying to Vercel
+
+1. Push this repo to GitHub
+2. Import the project in [Vercel](https://vercel.com)
+3. Add a **Postgres** database from Vercel's Storage tab (free tier)
+4. Vercel auto-sets `POSTGRES_URL` — no manual env var config needed
+5. Deploy — the database auto-seeds on the first request
+
+The app uses a dual-mode database layer:
+- **Local dev**: SQLite via `better-sqlite3` (zero config)
+- **Vercel production**: Postgres via `pg` (auto-detected from `POSTGRES_URL` env var)
 
 ## Project Structure
 
 ```
 cm2-summer-camp/
+├── api/
+│   └── index.js              # Vercel serverless wrapper
 ├── backend/
-│   ├── server.js            # Express server entry point
-│   ├── database.js          # SQLite init + seed data
-│   ├── middleware/auth.js    # JWT authentication middleware
+│   ├── server.js             # Express app (exports for Vercel)
+│   ├── database.js           # Dual-mode DB (SQLite + Postgres)
+│   ├── middleware/auth.js     # JWT authentication middleware
 │   └── routes/
-│       ├── auth.js           # Login & user info
-│       ├── campers.js        # Camper CRUD
-│       ├── cabins.js         # Cabin management
-│       ├── activities.js     # Activity CRUD
-│       ├── schedule.js       # Schedule management
-│       ├── attendance.js     # Attendance tracking
-│       └── announcements.js  # Announcements
+│       ├── auth.js            # Login & user info
+│       ├── campers.js         # Camper CRUD
+│       ├── cabins.js          # Cabin management
+│       ├── activities.js      # Activity CRUD
+│       ├── schedule.js        # Schedule management
+│       ├── attendance.js      # Attendance tracking
+│       └── announcements.js   # Announcements
 ├── frontend/
 │   ├── index.html
 │   ├── vite.config.js
 │   └── src/
 │       ├── main.jsx
-│       ├── App.jsx           # Routing & auth state
-│       ├── api.js            # Axios config with JWT interceptor
+│       ├── App.jsx            # Routing & auth state
+│       ├── api.js             # Axios config with JWT interceptor
 │       ├── components/
 │       │   ├── Navbar.jsx
 │       │   └── AnnouncementCard.jsx
@@ -88,7 +103,8 @@ cm2-summer-camp/
 │       │   └── AdminDashboard.jsx
 │       └── styles/
 │           └── global.css
-├── package.json              # Root — runs both via concurrently
+├── vercel.json                # Vercel deployment config
+├── package.json               # Root — runs both via concurrently
 └── README.md
 ```
 
@@ -104,4 +120,5 @@ The database auto-seeds on first run with:
 - **Sample attendance records**
 - **4 sample announcements**
 
-To reset the database, delete `backend/camp.db` and restart the server.
+To reset the local database, delete `backend/camp.db` and restart the server.
+To reset the Vercel Postgres database, drop all tables and redeploy.

@@ -1,12 +1,12 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { getDb } = require('../database');
+const { db } = require('../database');
 const { JWT_SECRET, authenticateToken } = require('../middleware/auth');
 
 const router = express.Router();
 
-router.post('/login', (req, res) => {
+router.post('/login', async (req, res) => {
   try {
     const { username, password } = req.body;
 
@@ -14,10 +14,10 @@ router.post('/login', (req, res) => {
       return res.status(400).json({ error: 'Username and password are required' });
     }
 
-    const db = getDb();
-    const user = db.prepare(
-      'SELECT u.*, c.name as cabin_name FROM users u LEFT JOIN cabins c ON u.cabin_id = c.id WHERE u.username = ?'
-    ).get(username);
+    const user = await db.get(
+      'SELECT u.*, c.name as cabin_name FROM users u LEFT JOIN cabins c ON u.cabin_id = c.id WHERE u.username = ?',
+      [username]
+    );
 
     if (!user) {
       return res.status(401).json({ error: 'Invalid username or password' });
@@ -50,12 +50,12 @@ router.post('/login', (req, res) => {
   }
 });
 
-router.get('/me', authenticateToken, (req, res) => {
+router.get('/me', authenticateToken, async (req, res) => {
   try {
-    const db = getDb();
-    const user = db.prepare(
-      'SELECT u.id, u.name, u.username, u.role, u.cabin_id, u.age, c.name as cabin_name FROM users u LEFT JOIN cabins c ON u.cabin_id = c.id WHERE u.id = ?'
-    ).get(req.user.id);
+    const user = await db.get(
+      'SELECT u.id, u.name, u.username, u.role, u.cabin_id, u.age, c.name as cabin_name FROM users u LEFT JOIN cabins c ON u.cabin_id = c.id WHERE u.id = ?',
+      [req.user.id]
+    );
 
     if (!user) {
       return res.status(404).json({ error: 'User not found' });

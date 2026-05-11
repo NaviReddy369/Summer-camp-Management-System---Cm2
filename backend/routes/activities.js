@@ -1,20 +1,19 @@
 const express = require('express');
-const { getDb } = require('../database');
+const { db } = require('../database');
 const { authenticateToken, requireRole } = require('../middleware/auth');
 
 const router = express.Router();
 
-router.get('/', authenticateToken, (req, res) => {
+router.get('/', authenticateToken, async (req, res) => {
   try {
-    const db = getDb();
-    const activities = db.prepare('SELECT * FROM activities ORDER BY day_of_week, time_slot').all();
+    const activities = await db.all('SELECT * FROM activities ORDER BY day_of_week, time_slot');
     res.json({ activities });
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch activities' });
   }
 });
 
-router.post('/', authenticateToken, requireRole('admin'), (req, res) => {
+router.post('/', authenticateToken, requireRole('admin'), async (req, res) => {
   try {
     const { name, description, location, time_slot, day_of_week } = req.body;
 
@@ -22,10 +21,10 @@ router.post('/', authenticateToken, requireRole('admin'), (req, res) => {
       return res.status(400).json({ error: 'Activity name is required' });
     }
 
-    const db = getDb();
-    const result = db.prepare(
-      'INSERT INTO activities (name, description, location, time_slot, day_of_week) VALUES (?, ?, ?, ?, ?)'
-    ).run(name, description || '', location || '', time_slot || '', day_of_week || '');
+    const result = await db.run(
+      'INSERT INTO activities (name, description, location, time_slot, day_of_week) VALUES (?, ?, ?, ?, ?)',
+      [name, description || '', location || '', time_slot || '', day_of_week || '']
+    );
 
     res.status(201).json({ id: result.lastInsertRowid, name, description, location, time_slot, day_of_week });
   } catch (err) {
@@ -33,14 +32,14 @@ router.post('/', authenticateToken, requireRole('admin'), (req, res) => {
   }
 });
 
-router.put('/:id', authenticateToken, requireRole('admin'), (req, res) => {
+router.put('/:id', authenticateToken, requireRole('admin'), async (req, res) => {
   try {
     const { name, description, location, time_slot, day_of_week } = req.body;
-    const db = getDb();
 
-    db.prepare(
-      'UPDATE activities SET name = ?, description = ?, location = ?, time_slot = ?, day_of_week = ? WHERE id = ?'
-    ).run(name, description, location, time_slot, day_of_week, req.params.id);
+    await db.run(
+      'UPDATE activities SET name = ?, description = ?, location = ?, time_slot = ?, day_of_week = ? WHERE id = ?',
+      [name, description, location, time_slot, day_of_week, req.params.id]
+    );
 
     res.json({ message: 'Activity updated' });
   } catch (err) {
@@ -48,11 +47,10 @@ router.put('/:id', authenticateToken, requireRole('admin'), (req, res) => {
   }
 });
 
-router.delete('/:id', authenticateToken, requireRole('admin'), (req, res) => {
+router.delete('/:id', authenticateToken, requireRole('admin'), async (req, res) => {
   try {
-    const db = getDb();
-    db.prepare('DELETE FROM schedule WHERE activity_id = ?').run(req.params.id);
-    db.prepare('DELETE FROM activities WHERE id = ?').run(req.params.id);
+    await db.run('DELETE FROM schedule WHERE activity_id = ?', [req.params.id]);
+    await db.run('DELETE FROM activities WHERE id = ?', [req.params.id]);
     res.json({ message: 'Activity deleted' });
   } catch (err) {
     res.status(500).json({ error: 'Failed to delete activity' });

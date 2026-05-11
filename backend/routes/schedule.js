@@ -1,12 +1,11 @@
 const express = require('express');
-const { getDb } = require('../database');
+const { db } = require('../database');
 const { authenticateToken, requireRole } = require('../middleware/auth');
 
 const router = express.Router();
 
-router.get('/', authenticateToken, (req, res) => {
+router.get('/', authenticateToken, async (req, res) => {
   try {
-    const db = getDb();
     const { cabin_id, date } = req.query;
 
     let query = `
@@ -33,14 +32,14 @@ router.get('/', authenticateToken, (req, res) => {
     }
     query += ' ORDER BY s.date, a.time_slot';
 
-    const schedule = db.prepare(query).all(...params);
+    const schedule = await db.all(query, params);
     res.json({ schedule });
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch schedule' });
   }
 });
 
-router.post('/', authenticateToken, requireRole('admin'), (req, res) => {
+router.post('/', authenticateToken, requireRole('admin'), async (req, res) => {
   try {
     const { cabin_id, activity_id, date } = req.body;
 
@@ -48,10 +47,10 @@ router.post('/', authenticateToken, requireRole('admin'), (req, res) => {
       return res.status(400).json({ error: 'Cabin, activity, and date are required' });
     }
 
-    const db = getDb();
-    const result = db.prepare(
-      'INSERT INTO schedule (cabin_id, activity_id, date) VALUES (?, ?, ?)'
-    ).run(cabin_id, activity_id, date);
+    const result = await db.run(
+      'INSERT INTO schedule (cabin_id, activity_id, date) VALUES (?, ?, ?)',
+      [cabin_id, activity_id, date]
+    );
 
     res.status(201).json({ id: result.lastInsertRowid, cabin_id, activity_id, date });
   } catch (err) {
@@ -59,10 +58,9 @@ router.post('/', authenticateToken, requireRole('admin'), (req, res) => {
   }
 });
 
-router.delete('/:id', authenticateToken, requireRole('admin'), (req, res) => {
+router.delete('/:id', authenticateToken, requireRole('admin'), async (req, res) => {
   try {
-    const db = getDb();
-    db.prepare('DELETE FROM schedule WHERE id = ?').run(req.params.id);
+    await db.run('DELETE FROM schedule WHERE id = ?', [req.params.id]);
     res.json({ message: 'Schedule entry deleted' });
   } catch (err) {
     res.status(500).json({ error: 'Failed to delete schedule entry' });

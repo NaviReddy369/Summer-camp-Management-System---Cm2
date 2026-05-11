@@ -1,12 +1,11 @@
 const express = require('express');
-const { getDb } = require('../database');
+const { db } = require('../database');
 const { authenticateToken, requireRole } = require('../middleware/auth');
 
 const router = express.Router();
 
-router.get('/', authenticateToken, (req, res) => {
+router.get('/', authenticateToken, async (req, res) => {
   try {
-    const db = getDb();
     let query = `
       SELECT a.*, u.name as author_name, u.role as author_role
       FROM announcements a
@@ -19,14 +18,14 @@ router.get('/', authenticateToken, (req, res) => {
 
     query += ' ORDER BY a.created_at DESC';
 
-    const announcements = db.prepare(query).all();
+    const announcements = await db.all(query);
     res.json({ announcements });
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch announcements' });
   }
 });
 
-router.post('/', authenticateToken, requireRole('counselor', 'admin'), (req, res) => {
+router.post('/', authenticateToken, requireRole('counselor', 'admin'), async (req, res) => {
   try {
     const { title, body, audience } = req.body;
 
@@ -34,15 +33,16 @@ router.post('/', authenticateToken, requireRole('counselor', 'admin'), (req, res
       return res.status(400).json({ error: 'Title and body are required' });
     }
 
-    const db = getDb();
-    const result = db.prepare(
-      'INSERT INTO announcements (author_id, title, body, audience) VALUES (?, ?, ?, ?)'
-    ).run(req.user.id, title, body, audience || 'all');
+    const result = await db.run(
+      'INSERT INTO announcements (author_id, title, body, audience) VALUES (?, ?, ?, ?)',
+      [req.user.id, title, body, audience || 'all']
+    );
 
-    const announcement = db.prepare(
+    const announcement = await db.get(
       `SELECT a.*, u.name as author_name, u.role as author_role
-       FROM announcements a JOIN users u ON a.author_id = u.id WHERE a.id = ?`
-    ).get(result.lastInsertRowid);
+       FROM announcements a JOIN users u ON a.author_id = u.id WHERE a.id = ?`,
+      [result.lastInsertRowid]
+    );
 
     res.status(201).json({ announcement });
   } catch (err) {
@@ -50,10 +50,9 @@ router.post('/', authenticateToken, requireRole('counselor', 'admin'), (req, res
   }
 });
 
-router.delete('/:id', authenticateToken, requireRole('admin'), (req, res) => {
+router.delete('/:id', authenticateToken, requireRole('admin'), async (req, res) => {
   try {
-    const db = getDb();
-    db.prepare('DELETE FROM announcements WHERE id = ?').run(req.params.id);
+    await db.run('DELETE FROM announcements WHERE id = ?', [req.params.id]);
     res.json({ message: 'Announcement deleted' });
   } catch (err) {
     res.status(500).json({ error: 'Failed to delete announcement' });
