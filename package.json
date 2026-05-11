@@ -1,0 +1,16 @@
+{
+  "name": "cm2-summer-camp",
+  "version": "1.0.0",
+  "description": "Community Matters 2 — Summer Camp Management System",
+  "scripts": {
+    "install:backend": "cd backend && npm install",
+    "install:frontend": "cd frontend && npm install",
+    "postinstall": "npm run install:backend && npm run install:frontend",
+    "dev:backend": "cd backend && node server.js",
+    "dev:frontend": "cd frontend && npx vite --port 5173",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\""
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.1"
+  }
+}
