@@ -13,10 +13,16 @@ if (usePostgres) {
     max: 10,
   });
 } else {
-  const Database = require('better-sqlite3');
-  sqliteDb = new Database(path.join(__dirname, 'camp.db'));
-  sqliteDb.pragma('journal_mode = WAL');
-  sqliteDb.pragma('foreign_keys = ON');
+  try {
+    // Dynamic require prevents Vercel's bundler from tracing this native module
+    const sqliteModule = 'better-sqlite3';
+    const Database = require(sqliteModule);
+    sqliteDb = new Database(path.join(__dirname, 'camp.db'));
+    sqliteDb.pragma('journal_mode = WAL');
+    sqliteDb.pragma('foreign_keys = ON');
+  } catch (err) {
+    console.error('better-sqlite3 not available. Set POSTGRES_URL for production.', err.message);
+  }
 }
 
 function pgParams(sql) {
