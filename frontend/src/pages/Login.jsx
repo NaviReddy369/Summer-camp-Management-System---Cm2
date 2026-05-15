@@ -42,11 +42,9 @@ export default function Login({ onLogin }) {
     <div className="login-page">
       <div className="login-container">
         <div className="login-header">
-          <div className="login-logo">
-            <TreePine size={32} />
-          </div>
+          <img src="/CM2 Logo.png" alt="CM2 Logo" className="login-logo-img" />
           <h1>Community Matters 2</h1>
-          <p>Summer Camp Management System</p>
+          <p>EXTRAORDINARY YOUTH SUMMER CAMP</p>
         </div>
 
         <div className="login-tabs">

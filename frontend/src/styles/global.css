@@ -264,6 +264,15 @@ input, select, textarea {
   box-shadow: 0 4px 20px rgba(255,107,44,0.4);
   animation: pulse 2s ease-in-out infinite;
 }
+.login-logo-img {
+  width: 90px;
+  height: 90px;
+  border-radius: var(--radius-lg);
+  object-fit: cover;
+  margin-bottom: 1rem;
+  box-shadow: 0 4px 20px rgba(255,107,44,0.4);
+  animation: pulse 2s ease-in-out infinite;
+}
 
 @keyframes pulse {
   0%, 100% { transform: scale(1); box-shadow: 0 4px 20px rgba(255,107,44,0.4); }
