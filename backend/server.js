@@ -1,3 +1,5 @@
+try { require('dotenv').config(); } catch { /* dotenv optional — Vercel injects env vars directly */ }
+
 const express = require('express');
 const cors = require('cors');
 const { db, initializeDatabase } = require('./database');
