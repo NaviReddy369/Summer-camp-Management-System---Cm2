@@ -88,6 +88,11 @@ const SQLITE_SCHEMA = `
     role TEXT NOT NULL CHECK(role IN ('camper','counselor','admin')),
     cabin_id INTEGER REFERENCES cabins(id),
     age INTEGER,
+    email TEXT,
+    phone TEXT,
+    guardian_name TEXT,
+    guardian_phone TEXT,
+    must_change_password INTEGER DEFAULT 1,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
   CREATE TABLE IF NOT EXISTS activities (
@@ -136,6 +141,11 @@ const POSTGRES_SCHEMA = `
     role TEXT NOT NULL CHECK(role IN ('camper','counselor','admin')),
     cabin_id INTEGER REFERENCES cabins(id),
     age INTEGER,
+    email TEXT,
+    phone TEXT,
+    guardian_name TEXT,
+    guardian_phone TEXT,
+    must_change_password INTEGER DEFAULT 1,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
   );
   CREATE TABLE IF NOT EXISTS activities (
@@ -171,10 +181,43 @@ const POSTGRES_SCHEMA = `
 
 async function initializeDatabase() {
   await db.exec(usePostgres ? POSTGRES_SCHEMA : SQLITE_SCHEMA);
+  await migrateAddColumns();
 
   const result = await db.get('SELECT COUNT(*) as count FROM users');
   if (Number(result.count) === 0) {
     await seedDatabase();
+  }
+}
+
+async function migrateAddColumns() {
+  const newColumns = [
+    { name: 'email', type: 'TEXT' },
+    { name: 'phone', type: 'TEXT' },
+    { name: 'guardian_name', type: 'TEXT' },
+    { name: 'guardian_phone', type: 'TEXT' },
+    { name: 'must_change_password', type: 'INTEGER DEFAULT 1' },
+  ];
+
+  if (usePostgres) {
+    for (const col of newColumns) {
+      try {
+        await db.exec(`ALTER TABLE users ADD COLUMN IF NOT EXISTS ${col.name} ${col.type}`);
+      } catch (e) {
+        console.error(`Migration ${col.name} skipped:`, e.message);
+      }
+    }
+  } else {
+    const existing = await db.all("PRAGMA table_info(users)");
+    const existingNames = new Set(existing.map((c) => c.name));
+    for (const col of newColumns) {
+      if (!existingNames.has(col.name)) {
+        try {
+          await db.exec(`ALTER TABLE users ADD COLUMN ${col.name} ${col.type}`);
+        } catch (e) {
+          console.error(`Migration ${col.name} failed:`, e.message);
+        }
+      }
+    }
   }
 }
 
@@ -185,46 +228,22 @@ async function seedDatabase() {
   await db.run('INSERT INTO cabins (name, theme_color) VALUES (?, ?)', ['Falcon', '#3498DB']);
   await db.run('INSERT INTO cabins (name, theme_color) VALUES (?, ?)', ['Bear', '#2ECC71']);
 
-  await db.run(
-    'INSERT INTO users (name, username, password_hash, role, cabin_id, age) VALUES (?, ?, ?, ?, ?, ?)',
-    ['Camp Admin', 'admin', hash('admin123'), 'admin', null, null]
-  );
-  await db.run(
-    'INSERT INTO users (name, username, password_hash, role, cabin_id, age) VALUES (?, ?, ?, ?, ?, ?)',
-    ['Sarah Johnson', 'counselor1', hash('camp2024'), 'counselor', 1, 24]
-  );
-  await db.run(
-    'INSERT INTO users (name, username, password_hash, role, cabin_id, age) VALUES (?, ?, ?, ?, ?, ?)',
-    ['Mike Chen', 'counselor2', hash('camp2024'), 'counselor', 2, 26]
-  );
-  await db.run(
-    'INSERT INTO users (name, username, password_hash, role, cabin_id, age) VALUES (?, ?, ?, ?, ?, ?)',
-    ['Lisa Park', 'counselor3', hash('camp2024'), 'counselor', 3, 23]
-  );
-  await db.run(
-    'INSERT INTO users (name, username, password_hash, role, cabin_id, age) VALUES (?, ?, ?, ?, ?, ?)',
-    ['Alex Rivera', 'camper1', hash('camp2024'), 'camper', 1, 12]
-  );
-  await db.run(
-    'INSERT INTO users (name, username, password_hash, role, cabin_id, age) VALUES (?, ?, ?, ?, ?, ?)',
-    ['Jordan Smith', 'camper2', hash('camp2024'), 'camper', 1, 11]
-  );
-  await db.run(
-    'INSERT INTO users (name, username, password_hash, role, cabin_id, age) VALUES (?, ?, ?, ?, ?, ?)',
-    ['Casey Brown', 'camper3', hash('camp2024'), 'camper', 2, 13]
-  );
-  await db.run(
-    'INSERT INTO users (name, username, password_hash, role, cabin_id, age) VALUES (?, ?, ?, ?, ?, ?)',
-    ['Taylor Davis', 'camper4', hash('camp2024'), 'camper', 2, 12]
-  );
-  await db.run(
-    'INSERT INTO users (name, username, password_hash, role, cabin_id, age) VALUES (?, ?, ?, ?, ?, ?)',
-    ['Morgan Lee', 'camper5', hash('camp2024'), 'camper', 3, 11]
-  );
-  await db.run(
-    'INSERT INTO users (name, username, password_hash, role, cabin_id, age) VALUES (?, ?, ?, ?, ?, ?)',
-    ['Riley Wilson', 'camper6', hash('camp2024'), 'camper', 3, 14]
-  );
+  const insertUserSql =
+    'INSERT INTO users (name, username, password_hash, role, cabin_id, age, email, phone, guardian_name, guardian_phone, must_change_password) ' +
+    'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)';
+
+  await db.run(insertUserSql, ['Camp Admin', 'admin', hash('admin123'), 'admin', null, null, 'admin@cm2camp.org', null, null, null]);
+
+  await db.run(insertUserSql, ['Sarah Johnson', 'counselor1', hash('camp2024'), 'counselor', 1, 24, 'sarah@cm2camp.org', '555-0101', null, null]);
+  await db.run(insertUserSql, ['Mike Chen', 'counselor2', hash('camp2024'), 'counselor', 2, 26, 'mike@cm2camp.org', '555-0102', null, null]);
+  await db.run(insertUserSql, ['Lisa Park', 'counselor3', hash('camp2024'), 'counselor', 3, 23, 'lisa@cm2camp.org', '555-0103', null, null]);
+
+  await db.run(insertUserSql, ['Alex Rivera', 'camper1', hash('camp2024'), 'camper', 1, 12, 'alex.rivera@example.com', null, 'Maria Rivera', '555-1001']);
+  await db.run(insertUserSql, ['Jordan Smith', 'camper2', hash('camp2024'), 'camper', 1, 11, 'jordan.smith@example.com', null, 'Pat Smith', '555-1002']);
+  await db.run(insertUserSql, ['Casey Brown', 'camper3', hash('camp2024'), 'camper', 2, 13, 'casey.brown@example.com', null, 'Sam Brown', '555-1003']);
+  await db.run(insertUserSql, ['Taylor Davis', 'camper4', hash('camp2024'), 'camper', 2, 12, 'taylor.davis@example.com', null, 'Robin Davis', '555-1004']);
+  await db.run(insertUserSql, ['Morgan Lee', 'camper5', hash('camp2024'), 'camper', 3, 11, 'morgan.lee@example.com', null, 'Jordan Lee', '555-1005']);
+  await db.run(insertUserSql, ['Riley Wilson', 'camper6', hash('camp2024'), 'camper', 3, 14, 'riley.wilson@example.com', null, 'Chris Wilson', '555-1006']);
 
   await db.run('UPDATE cabins SET counselor_id = 2 WHERE id = 1');
   await db.run('UPDATE cabins SET counselor_id = 3 WHERE id = 2');

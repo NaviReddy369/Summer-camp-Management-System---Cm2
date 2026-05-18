@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import {
   Users, Home, Activity, Calendar, Megaphone, Plus, Trash2, Edit3, X, Send,
-  BarChart3, UserPlus, ClipboardList
+  BarChart3, UserPlus, ClipboardList, KeyRound, Mail
 } from 'lucide-react';
 import api from '../api';
 import AnnouncementCard from '../components/AnnouncementCard';
+import CredentialsModal from '../components/CredentialsModal';
 
 const avatarColors = ['#FF6B2C', '#2ECC71', '#3498DB', '#9B59B6', '#E74C3C', '#F39C12', '#1ABC9C', '#E91E63'];
 function getAvatarColor(name) {
@@ -20,14 +21,25 @@ export default function AdminDashboard({ user }) {
   const [activeTab, setActiveTab] = useState('overview');
   const [stats, setStats] = useState({ campers: 0, counselors: 0, cabins: 0, activities: 0 });
   const [campers, setCampers] = useState([]);
+  const [counselors, setCounselors] = useState([]);
   const [cabins, setCabins] = useState([]);
   const [activities, setActivities] = useState([]);
   const [schedule, setSchedule] = useState([]);
   const [announcements, setAnnouncements] = useState([]);
 
+  const emptyCamperForm = { name: '', email: '', age: '', cabin_id: '', guardian_name: '', guardian_phone: '' };
   const [showCamperModal, setShowCamperModal] = useState(false);
   const [editingCamper, setEditingCamper] = useState(null);
-  const [camperForm, setCamperForm] = useState({ name: '', username: '', password: '', cabin_id: '', age: '' });
+  const [camperForm, setCamperForm] = useState(emptyCamperForm);
+  const [savingCamper, setSavingCamper] = useState(false);
+
+  const emptyCounselorForm = { name: '', email: '', phone: '', age: '', cabin_id: '' };
+  const [showCounselorModal, setShowCounselorModal] = useState(false);
+  const [editingCounselor, setEditingCounselor] = useState(null);
+  const [counselorForm, setCounselorForm] = useState(emptyCounselorForm);
+  const [savingCounselor, setSavingCounselor] = useState(false);
+
+  const [credentialsToShow, setCredentialsToShow] = useState(null);
 
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [scheduleForm, setScheduleForm] = useState({ cabin_id: '', activity_id: '', date: '' });
@@ -41,9 +53,10 @@ export default function AdminDashboard({ user }) {
 
   const loadAllData = async () => {
     try {
-      const [statsRes, campersRes, cabinsRes, activitiesRes, schedRes, annRes] = await Promise.all([
+      const [statsRes, campersRes, counselorsRes, cabinsRes, activitiesRes, schedRes, annRes] = await Promise.all([
         api.get('/stats'),
         api.get('/campers'),
+        api.get('/counselors'),
         api.get('/cabins'),
         api.get('/activities'),
         api.get('/schedule'),
@@ -51,6 +64,7 @@ export default function AdminDashboard({ user }) {
       ]);
       setStats(statsRes.data);
       setCampers(campersRes.data.campers);
+      setCounselors(counselorsRes.data.counselors);
       setCabins(cabinsRes.data.cabins);
       setActivities(activitiesRes.data.activities);
       setSchedule(schedRes.data.schedule);
@@ -63,30 +77,49 @@ export default function AdminDashboard({ user }) {
   // Camper CRUD
   const openAddCamper = () => {
     setEditingCamper(null);
-    setCamperForm({ name: '', username: '', password: '', cabin_id: '', age: '' });
+    setCamperForm(emptyCamperForm);
     setShowCamperModal(true);
   };
   const openEditCamper = (c) => {
     setEditingCamper(c);
-    setCamperForm({ name: c.name, username: c.username, password: '', cabin_id: c.cabin_id || '', age: c.age || '' });
+    setCamperForm({
+      name: c.name || '',
+      email: c.email || '',
+      age: c.age || '',
+      cabin_id: c.cabin_id || '',
+      guardian_name: c.guardian_name || '',
+      guardian_phone: c.guardian_phone || '',
+    });
     setShowCamperModal(true);
   };
   const saveCamper = async (e) => {
     e.preventDefault();
+    setSavingCamper(true);
     try {
       if (editingCamper) {
         await api.put(`/campers/${editingCamper.id}`, {
           name: camperForm.name,
-          cabin_id: camperForm.cabin_id || null,
+          email: camperForm.email || null,
           age: camperForm.age || null,
+          cabin_id: camperForm.cabin_id || null,
+          guardian_name: camperForm.guardian_name || null,
+          guardian_phone: camperForm.guardian_phone || null,
         });
+        setShowCamperModal(false);
       } else {
-        await api.post('/campers', camperForm);
+        const res = await api.post('/campers', camperForm);
+        setShowCamperModal(false);
+        setCredentialsToShow({
+          role: 'camper',
+          user: res.data.camper,
+          credentials: res.data.credentials,
+        });
       }
-      setShowCamperModal(false);
       loadAllData();
     } catch (err) {
       alert(err.response?.data?.error || 'Failed to save camper');
+    } finally {
+      setSavingCamper(false);
     }
   };
   const deleteCamper = async (id) => {
@@ -96,6 +129,90 @@ export default function AdminDashboard({ user }) {
       loadAllData();
     } catch (err) {
       alert('Failed to delete camper');
+    }
+  };
+  const resetCamperPassword = async (camper) => {
+    if (!confirm(`Reset password for ${camper.name}? They will need the new temporary password to log in.`)) return;
+    try {
+      const res = await api.post(`/campers/${camper.id}/reset-password`);
+      setCredentialsToShow({
+        role: 'camper',
+        user: camper,
+        credentials: res.data.credentials,
+      });
+      loadAllData();
+    } catch (err) {
+      alert(err.response?.data?.error || 'Failed to reset password');
+    }
+  };
+
+  // Counselor CRUD
+  const openAddCounselor = () => {
+    setEditingCounselor(null);
+    setCounselorForm(emptyCounselorForm);
+    setShowCounselorModal(true);
+  };
+  const openEditCounselor = (c) => {
+    setEditingCounselor(c);
+    setCounselorForm({
+      name: c.name || '',
+      email: c.email || '',
+      phone: c.phone || '',
+      age: c.age || '',
+      cabin_id: c.cabin_id || '',
+    });
+    setShowCounselorModal(true);
+  };
+  const saveCounselor = async (e) => {
+    e.preventDefault();
+    setSavingCounselor(true);
+    try {
+      if (editingCounselor) {
+        await api.put(`/counselors/${editingCounselor.id}`, {
+          name: counselorForm.name,
+          email: counselorForm.email || null,
+          phone: counselorForm.phone || null,
+          age: counselorForm.age || null,
+          cabin_id: counselorForm.cabin_id || null,
+        });
+        setShowCounselorModal(false);
+      } else {
+        const res = await api.post('/counselors', counselorForm);
+        setShowCounselorModal(false);
+        setCredentialsToShow({
+          role: 'counselor',
+          user: res.data.counselor,
+          credentials: res.data.credentials,
+        });
+      }
+      loadAllData();
+    } catch (err) {
+      alert(err.response?.data?.error || 'Failed to save counselor');
+    } finally {
+      setSavingCounselor(false);
+    }
+  };
+  const deleteCounselor = async (id) => {
+    if (!confirm('Remove this counselor?')) return;
+    try {
+      await api.delete(`/counselors/${id}`);
+      loadAllData();
+    } catch (err) {
+      alert('Failed to delete counselor');
+    }
+  };
+  const resetCounselorPassword = async (counselor) => {
+    if (!confirm(`Reset password for ${counselor.name}?`)) return;
+    try {
+      const res = await api.post(`/counselors/${counselor.id}/reset-password`);
+      setCredentialsToShow({
+        role: 'counselor',
+        user: counselor,
+        credentials: res.data.credentials,
+      });
+      loadAllData();
+    } catch (err) {
+      alert(err.response?.data?.error || 'Failed to reset password');
     }
   };
 
@@ -149,6 +266,7 @@ export default function AdminDashboard({ user }) {
   const tabs = [
     { key: 'overview', label: 'Overview', icon: <BarChart3 size={16} /> },
     { key: 'campers', label: 'Campers', icon: <Users size={16} /> },
+    { key: 'counselors', label: 'Counselors', icon: <UserPlus size={16} /> },
     { key: 'schedule', label: 'Schedule', icon: <Calendar size={16} /> },
     { key: 'announcements', label: 'Announcements', icon: <Megaphone size={16} /> },
   ];
@@ -261,6 +379,8 @@ export default function AdminDashboard({ user }) {
                   <tr>
                     <th>Name</th>
                     <th>Username</th>
+                    <th>Email</th>
+                    <th>Guardian</th>
                     <th>Age</th>
                     <th>Cabin</th>
                     <th>Actions</th>
@@ -276,12 +396,24 @@ export default function AdminDashboard({ user }) {
                         {c.name}
                       </td>
                       <td>@{c.username}</td>
+                      <td style={{ fontSize: '0.85rem' }}>{c.email || '—'}</td>
+                      <td style={{ fontSize: '0.85rem' }}>
+                        {c.guardian_name ? (
+                          <>
+                            <div>{c.guardian_name}</div>
+                            <div style={{ color: 'var(--gray-400)', fontSize: '0.75rem' }}>{c.guardian_phone || ''}</div>
+                          </>
+                        ) : '—'}
+                      </td>
                       <td>{c.age || '—'}</td>
                       <td>{c.cabin_name || 'Unassigned'}</td>
                       <td>
                         <div className="actions-cell">
                           <button className="btn btn-ghost btn-sm" onClick={() => openEditCamper(c)}>
                             <Edit3 size={14} /> Edit
+                          </button>
+                          <button className="btn btn-ghost btn-sm" onClick={() => resetCamperPassword(c)} title="Reset password">
+                            <KeyRound size={14} /> Reset
                           </button>
                           <button className="btn btn-danger btn-sm" onClick={() => deleteCamper(c.id)}>
                             <Trash2 size={14} />
@@ -296,7 +428,70 @@ export default function AdminDashboard({ user }) {
               <div className="empty-state">
                 <span className="emoji">🏕️</span>
                 <h3>No campers yet</h3>
-                <p>No activities yet — the fun is coming! 🏕️</p>
+                <p>Click "Add Camper" to create the first one — the office hands out the credentials. 🏕️</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* COUNSELORS */}
+      {activeTab === 'counselors' && (
+        <div className="section">
+          <div className="section-header">
+            <h2><UserPlus size={22} /> Counselor Management</h2>
+            <button className="btn btn-primary" onClick={openAddCounselor}>
+              <Plus size={16} /> Add Counselor
+            </button>
+          </div>
+          <div className="card" style={{ overflow: 'auto' }}>
+            {counselors.length > 0 ? (
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Cabin</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {counselors.map((c) => (
+                    <tr key={c.id}>
+                      <td style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <div className="avatar" style={{ width: 32, height: 32, fontSize: '0.7rem', background: getAvatarColor(c.name) }}>
+                          {c.name.split(' ').map((n) => n[0]).join('')}
+                        </div>
+                        {c.name}
+                      </td>
+                      <td>@{c.username}</td>
+                      <td style={{ fontSize: '0.85rem' }}>{c.email || '—'}</td>
+                      <td style={{ fontSize: '0.85rem' }}>{c.phone || '—'}</td>
+                      <td>{c.cabin_name || 'Unassigned'}</td>
+                      <td>
+                        <div className="actions-cell">
+                          <button className="btn btn-ghost btn-sm" onClick={() => openEditCounselor(c)}>
+                            <Edit3 size={14} /> Edit
+                          </button>
+                          <button className="btn btn-ghost btn-sm" onClick={() => resetCounselorPassword(c)}>
+                            <KeyRound size={14} /> Reset
+                          </button>
+                          <button className="btn btn-danger btn-sm" onClick={() => deleteCounselor(c.id)}>
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <div className="empty-state">
+                <span className="emoji">🧭</span>
+                <h3>No counselors yet</h3>
+                <p>Add your first counselor — they'll get a temporary password to share. 🧭</p>
               </div>
             )}
           </div>
@@ -459,8 +654,16 @@ export default function AdminDashboard({ user }) {
             </div>
             <form onSubmit={saveCamper}>
               <div className="modal-body">
+                {!editingCamper && (
+                  <div className="cred-warning">
+                    <Mail size={16} />
+                    <span>
+                      A temporary password will be generated automatically. You'll see the credentials after saving — copy them and hand them to the family.
+                    </span>
+                  </div>
+                )}
                 <div className="form-group">
-                  <label>Full Name</label>
+                  <label>Full Name *</label>
                   <input
                     className="form-control"
                     placeholder="e.g. Alex Rivera"
@@ -469,31 +672,37 @@ export default function AdminDashboard({ user }) {
                     required
                   />
                 </div>
-                {!editingCamper && (
-                  <>
-                    <div className="form-group">
-                      <label>Username</label>
-                      <input
-                        className="form-control"
-                        placeholder="e.g. camper7"
-                        value={camperForm.username}
-                        onChange={(e) => setCamperForm({ ...camperForm, username: e.target.value })}
-                        required
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label>Password</label>
-                      <input
-                        className="form-control"
-                        type="password"
-                        placeholder="Set a password"
-                        value={camperForm.password}
-                        onChange={(e) => setCamperForm({ ...camperForm, password: e.target.value })}
-                        required
-                      />
-                    </div>
-                  </>
-                )}
+                <div className="form-group">
+                  <label>Email *</label>
+                  <input
+                    className="form-control"
+                    type="email"
+                    placeholder="parent@example.com"
+                    value={camperForm.email}
+                    onChange={(e) => setCamperForm({ ...camperForm, email: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Guardian Name</label>
+                    <input
+                      className="form-control"
+                      placeholder="e.g. Maria Rivera"
+                      value={camperForm.guardian_name}
+                      onChange={(e) => setCamperForm({ ...camperForm, guardian_name: e.target.value })}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Guardian Phone</label>
+                    <input
+                      className="form-control"
+                      placeholder="555-1234"
+                      value={camperForm.guardian_phone}
+                      onChange={(e) => setCamperForm({ ...camperForm, guardian_phone: e.target.value })}
+                    />
+                  </div>
+                </div>
                 <div className="form-row">
                   <div className="form-group">
                     <label>Age</label>
@@ -524,13 +733,105 @@ export default function AdminDashboard({ user }) {
               </div>
               <div className="modal-footer">
                 <button type="button" className="btn btn-ghost" onClick={() => setShowCamperModal(false)}>Cancel</button>
-                <button type="submit" className="btn btn-primary">
-                  {editingCamper ? 'Save Changes' : 'Add Camper'}
+                <button type="submit" className="btn btn-primary" disabled={savingCamper}>
+                  {savingCamper ? 'Saving...' : editingCamper ? 'Save Changes' : 'Create Account'}
                 </button>
               </div>
             </form>
           </div>
         </div>
+      )}
+
+      {/* COUNSELOR MODAL */}
+      {showCounselorModal && (
+        <div className="modal-overlay" onClick={() => setShowCounselorModal(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>{editingCounselor ? 'Edit Counselor' : 'Add New Counselor'}</h2>
+              <button className="modal-close" onClick={() => setShowCounselorModal(false)}><X size={18} /></button>
+            </div>
+            <form onSubmit={saveCounselor}>
+              <div className="modal-body">
+                {!editingCounselor && (
+                  <div className="cred-warning">
+                    <Mail size={16} />
+                    <span>
+                      A temporary password will be generated automatically. You'll see the credentials after saving.
+                    </span>
+                  </div>
+                )}
+                <div className="form-group">
+                  <label>Full Name *</label>
+                  <input
+                    className="form-control"
+                    placeholder="e.g. Sarah Johnson"
+                    value={counselorForm.name}
+                    onChange={(e) => setCounselorForm({ ...counselorForm, name: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Email *</label>
+                  <input
+                    className="form-control"
+                    type="email"
+                    placeholder="staff@example.com"
+                    value={counselorForm.email}
+                    onChange={(e) => setCounselorForm({ ...counselorForm, email: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label>Phone</label>
+                    <input
+                      className="form-control"
+                      placeholder="555-1234"
+                      value={counselorForm.phone}
+                      onChange={(e) => setCounselorForm({ ...counselorForm, phone: e.target.value })}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Age</label>
+                    <input
+                      className="form-control"
+                      type="number"
+                      min="16"
+                      max="80"
+                      placeholder="Age"
+                      value={counselorForm.age}
+                      onChange={(e) => setCounselorForm({ ...counselorForm, age: e.target.value })}
+                    />
+                  </div>
+                </div>
+                <div className="form-group">
+                  <label>Assigned Cabin</label>
+                  <select
+                    className="form-control"
+                    value={counselorForm.cabin_id}
+                    onChange={(e) => setCounselorForm({ ...counselorForm, cabin_id: e.target.value })}
+                  >
+                    <option value="">Unassigned</option>
+                    {cabins.map((c) => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-ghost" onClick={() => setShowCounselorModal(false)}>Cancel</button>
+                <button type="submit" className="btn btn-primary" disabled={savingCounselor}>
+                  {savingCounselor ? 'Saving...' : editingCounselor ? 'Save Changes' : 'Create Account'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* CREDENTIALS MODAL */}
+      {credentialsToShow && (
+        <CredentialsModal data={credentialsToShow} onClose={() => setCredentialsToShow(null)} />
       )}
 
       {/* SCHEDULE MODAL */}

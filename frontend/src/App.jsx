@@ -5,6 +5,7 @@ import CamperDashboard from './pages/CamperDashboard';
 import CounselorDashboard from './pages/CounselorDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import Navbar from './components/Navbar';
+import Chatbot from './components/Chatbot';
 
 function App() {
   const [user, setUser] = useState(null);
@@ -53,6 +54,7 @@ function App() {
   return (
     <div className="app">
       {user && <Navbar user={user} onLogout={handleLogout} />}
+      {user && <Chatbot user={user} />}
       <Routes>
         <Route
           path="/"

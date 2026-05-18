@@ -4,11 +4,13 @@ const { db, initializeDatabase } = require('./database');
 
 const authRoutes = require('./routes/auth');
 const camperRoutes = require('./routes/campers');
+const counselorRoutes = require('./routes/counselors');
 const cabinRoutes = require('./routes/cabins');
 const activityRoutes = require('./routes/activities');
 const scheduleRoutes = require('./routes/schedule');
 const attendanceRoutes = require('./routes/attendance');
 const announcementRoutes = require('./routes/announcements');
+const chatRoutes = require('./routes/chat');
 
 const app = express();
 const PORT = 3001;
@@ -52,11 +54,13 @@ app.use(async (req, res, next) => {
 
 app.use('/api/auth', authRoutes);
 app.use('/api/campers', camperRoutes);
+app.use('/api/counselors', counselorRoutes);
 app.use('/api/cabins', cabinRoutes);
 app.use('/api/activities', activityRoutes);
 app.use('/api/schedule', scheduleRoutes);
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/announcements', announcementRoutes);
+app.use('/api/chat', chatRoutes);
 
 app.get('/api/stats', async (req, res) => {
   try {
