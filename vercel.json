@@ -1,4 +1,5 @@
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
   "version": 2,
   "buildCommand": "cd frontend && npm run build",
   "outputDirectory": "frontend/dist",
@@ -9,5 +10,12 @@
   },
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api" }
+  ],
+  "$documentation_envVars": [
+    "POSTGRES_URL    — auto-set when you attach a Neon/Postgres DB in Vercel Storage",
+    "RESEND_API_KEY  — get from https://resend.com/api-keys",
+    "RESEND_FROM_EMAIL — e.g. 'CM2 Camp <onboarding@resend.dev>' (must be verified domain)",
+    "FRONTEND_URL    — your live URL, e.g. https://cm2-camp.vercel.app",
+    "See .env.example for full details. Set these in Vercel → Settings → Environment Variables."
   ]
 }

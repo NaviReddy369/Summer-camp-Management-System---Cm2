@@ -43,6 +43,8 @@ router.post('/login', async (req, res) => {
         cabin_id: user.cabin_id,
         cabin_name: user.cabin_name,
         age: user.age,
+        email: user.email,
+        must_change_password: Number(user.must_change_password ?? 0) === 1 ? 1 : 0,
       },
     });
   } catch (err) {
@@ -53,7 +55,9 @@ router.post('/login', async (req, res) => {
 router.get('/me', authenticateToken, async (req, res) => {
   try {
     const user = await db.get(
-      'SELECT u.id, u.name, u.username, u.role, u.cabin_id, u.age, c.name as cabin_name FROM users u LEFT JOIN cabins c ON u.cabin_id = c.id WHERE u.id = ?',
+      `SELECT u.id, u.name, u.username, u.role, u.cabin_id, u.age, u.email, u.must_change_password,
+              c.name as cabin_name
+       FROM users u LEFT JOIN cabins c ON u.cabin_id = c.id WHERE u.id = ?`,
       [req.user.id]
     );
 
@@ -61,9 +65,47 @@ router.get('/me', authenticateToken, async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    res.json({ user });
+    res.json({
+      user: {
+        ...user,
+        must_change_password: Number(user.must_change_password ?? 0) === 1 ? 1 : 0,
+      },
+    });
   } catch (err) {
     res.status(500).json({ error: 'Failed to get user info' });
+  }
+});
+
+router.post('/change-password', authenticateToken, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ error: 'Current and new password are required' });
+    }
+    if (newPassword.length < 8) {
+      return res.status(400).json({ error: 'New password must be at least 8 characters' });
+    }
+
+    const user = await db.get('SELECT id, password_hash FROM users WHERE id = ?', [req.user.id]);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    if (!bcrypt.compareSync(currentPassword, user.password_hash)) {
+      return res.status(401).json({ error: 'Current password is incorrect' });
+    }
+    if (bcrypt.compareSync(newPassword, user.password_hash)) {
+      return res.status(400).json({ error: 'New password must be different from the current one' });
+    }
+
+    const password_hash = bcrypt.hashSync(newPassword, 10);
+    await db.run(
+      'UPDATE users SET password_hash = ?, must_change_password = 0 WHERE id = ?',
+      [password_hash, req.user.id]
+    );
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to change password' });
   }
 });
 

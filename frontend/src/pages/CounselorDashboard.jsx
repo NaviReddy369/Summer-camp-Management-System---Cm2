@@ -1,7 +1,13 @@
 import { useState, useEffect } from 'react';
-import { Users, ClipboardCheck, Calendar, Megaphone, Send, Home } from 'lucide-react';
+import { Users, ClipboardCheck, Calendar, Megaphone, Send, Home, BellRing, Check, ArrowLeft } from 'lucide-react';
 import api from '../api';
 import AnnouncementCard from '../components/AnnouncementCard';
+
+const PICKUP_LABELS = {
+  at_camp: { label: 'At Camp', class: 'pickup-at-camp', emoji: '🏕️' },
+  ready: { label: 'Ready for Pickup', class: 'pickup-ready', emoji: '🎒' },
+  picked_up: { label: 'Picked Up', class: 'pickup-picked-up', emoji: '✅' },
+};
 
 const avatarColors = ['#FF6B2C', '#2ECC71', '#3498DB', '#9B59B6', '#E74C3C', '#F39C12', '#1ABC9C', '#E91E63'];
 function getAvatarColor(name) {
@@ -86,6 +92,15 @@ export default function CounselorDashboard({ user }) {
     }));
   };
 
+  const updatePickupStatus = async (camperId, status) => {
+    try {
+      const res = await api.put(`/campers/${camperId}/pickup`, { status });
+      setCampers((prev) => prev.map((c) => c.id === camperId ? { ...c, pickup_status: res.data.pickup_status } : c));
+    } catch (err) {
+      alert(err.response?.data?.error || 'Failed to update pickup status');
+    }
+  };
+
   const postAnnouncement = async (e) => {
     e.preventDefault();
     if (!newAnnouncement.title || !newAnnouncement.body) return;
@@ -137,22 +152,53 @@ export default function CounselorDashboard({ user }) {
         {/* Camper Roster */}
         <div className="section">
           <div className="section-header">
-            <h2><Users size={22} /> Camper Roster</h2>
+            <h2><Users size={22} /> Camper Roster & Pickup Status</h2>
           </div>
           <div className="card">
             {campers.length > 0 ? (
               <div className="cabin-mates">
-                {campers.map((c) => (
-                  <div className="cabin-mate" key={c.id}>
-                    <div className="avatar" style={{ background: getAvatarColor(c.name) }}>
-                      {c.name.split(' ').map((n) => n[0]).join('')}
+                {campers.map((c) => {
+                  const status = c.pickup_status || 'at_camp';
+                  const meta = PICKUP_LABELS[status] || PICKUP_LABELS.at_camp;
+                  return (
+                    <div className="cabin-mate cabin-mate-row" key={c.id}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', flex: 1, minWidth: 0 }}>
+                        <div className="avatar" style={{ background: getAvatarColor(c.name) }}>
+                          {c.name.split(' ').map((n) => n[0]).join('')}
+                        </div>
+                        <div className="cabin-mate-info" style={{ minWidth: 0 }}>
+                          <h4>{c.name}</h4>
+                          <p>Age {c.age} &middot; @{c.username}</p>
+                          <span className={`pickup-badge ${meta.class}`}>
+                            {meta.emoji} {meta.label}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="pickup-actions">
+                        {status === 'at_camp' && (
+                          <button className="btn btn-primary btn-sm" onClick={() => updatePickupStatus(c.id, 'ready')} title="Notify guardian to pick up">
+                            <BellRing size={14} /> Mark Ready
+                          </button>
+                        )}
+                        {status === 'ready' && (
+                          <>
+                            <button className="btn btn-secondary btn-sm" onClick={() => updatePickupStatus(c.id, 'picked_up')}>
+                              <Check size={14} /> Picked Up
+                            </button>
+                            <button className="btn btn-ghost btn-sm" onClick={() => updatePickupStatus(c.id, 'at_camp')} title="Undo">
+                              <ArrowLeft size={14} />
+                            </button>
+                          </>
+                        )}
+                        {status === 'picked_up' && (
+                          <button className="btn btn-ghost btn-sm" onClick={() => updatePickupStatus(c.id, 'at_camp')} title="Reset to At Camp">
+                            <ArrowLeft size={14} /> Reset
+                          </button>
+                        )}
+                      </div>
                     </div>
-                    <div className="cabin-mate-info">
-                      <h4>{c.name}</h4>
-                      <p>Age {c.age} &middot; @{c.username}</p>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <div className="empty-state">

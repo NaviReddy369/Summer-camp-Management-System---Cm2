@@ -1240,6 +1240,49 @@ textarea.form-control {
 }
 
 /* ========================= */
+/* PICKUP STATUS              */
+/* ========================= */
+.cabin-mate-row {
+  flex-wrap: wrap;
+  gap: 0.75rem !important;
+}
+.pickup-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 4px;
+  padding: 0.2rem 0.6rem;
+  border-radius: 50px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+.pickup-at-camp {
+  background: var(--gray-200);
+  color: var(--gray-500);
+}
+.pickup-ready {
+  background: rgba(255,107,44,0.15);
+  color: var(--primary-dark);
+  animation: pulseBadge 1.6s ease-in-out infinite;
+}
+.pickup-picked-up {
+  background: rgba(46,204,113,0.15);
+  color: var(--secondary-dark);
+}
+@keyframes pulseBadge {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.04); }
+}
+.pickup-actions {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+
+/* ========================= */
 /* CREDENTIALS MODAL          */
 /* ========================= */
 .cred-warning {

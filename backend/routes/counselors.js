@@ -3,8 +3,13 @@ const bcrypt = require('bcryptjs');
 const { db } = require('../database');
 const { authenticateToken, requireRole } = require('../middleware/auth');
 const { generateTempPassword, generateUniqueUsername } = require('../utils/credentials');
+const { sendWelcomeEmail, sendPasswordResetEmail } = require('../services/email');
 
 const router = express.Router();
+
+function getLoginUrl() {
+  return process.env.FRONTEND_URL || 'http://localhost:5173';
+}
 
 const COUNSELOR_FIELDS = `u.id, u.name, u.username, u.email, u.phone, u.age, u.cabin_id,
   u.must_change_password, c.name as cabin_name`;
@@ -81,6 +86,15 @@ router.post('/', authenticateToken, requireRole('admin'), async (req, res) => {
         must_change_password: true,
       },
     });
+
+    sendWelcomeEmail({
+      to: email.trim(),
+      name: name.trim(),
+      username,
+      tempPassword,
+      role: 'counselor',
+      loginUrl: getLoginUrl(),
+    }).catch((e) => console.error('[email] welcome (counselor) failed:', e.message));
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to create counselor' });
@@ -127,6 +141,16 @@ router.post('/:id/reset-password', authenticateToken, requireRole('admin'), asyn
         must_change_password: true,
       },
     });
+
+    if (counselor.email) {
+      sendPasswordResetEmail({
+        to: counselor.email,
+        name: counselor.name,
+        username: counselor.username,
+        tempPassword,
+        loginUrl: getLoginUrl(),
+      }).catch((e) => console.error('[email] reset (counselor) failed:', e.message));
+    }
   } catch (err) {
     res.status(500).json({ error: 'Failed to reset password' });
   }

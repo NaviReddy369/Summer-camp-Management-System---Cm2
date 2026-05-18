@@ -3,11 +3,16 @@ const bcrypt = require('bcryptjs');
 const { db } = require('../database');
 const { authenticateToken, requireRole } = require('../middleware/auth');
 const { generateTempPassword, generateUniqueUsername } = require('../utils/credentials');
+const { sendWelcomeEmail, sendPasswordResetEmail, sendPickupReadyEmail } = require('../services/email');
 
 const router = express.Router();
 
 const CAMPER_FIELDS = `u.id, u.name, u.username, u.age, u.cabin_id, u.email, u.phone,
-  u.guardian_name, u.guardian_phone, u.must_change_password, c.name as cabin_name`;
+  u.guardian_name, u.guardian_phone, u.pickup_status, u.must_change_password, c.name as cabin_name`;
+
+function getLoginUrl() {
+  return process.env.FRONTEND_URL || 'http://localhost:5173';
+}
 
 router.get('/', authenticateToken, async (req, res) => {
   try {
@@ -104,6 +109,15 @@ router.post('/', authenticateToken, requireRole('admin'), async (req, res) => {
         must_change_password: true,
       },
     });
+
+    sendWelcomeEmail({
+      to: email.trim(),
+      name: name.trim(),
+      username,
+      tempPassword,
+      role: 'camper',
+      loginUrl: getLoginUrl(),
+    }).catch((e) => console.error('[email] welcome (camper) failed:', e.message));
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to create camper' });
@@ -151,8 +165,64 @@ router.post('/:id/reset-password', authenticateToken, requireRole('admin'), asyn
         must_change_password: true,
       },
     });
+
+    if (camper.email) {
+      sendPasswordResetEmail({
+        to: camper.email,
+        name: camper.name,
+        username: camper.username,
+        tempPassword,
+        loginUrl: getLoginUrl(),
+      }).catch((e) => console.error('[email] reset (camper) failed:', e.message));
+    }
   } catch (err) {
     res.status(500).json({ error: 'Failed to reset password' });
+  }
+});
+
+const VALID_PICKUP_STATUS = new Set(['at_camp', 'ready', 'picked_up']);
+
+router.put('/:id/pickup', authenticateToken, requireRole('counselor', 'admin'), async (req, res) => {
+  try {
+    const { status } = req.body;
+    if (!VALID_PICKUP_STATUS.has(status)) {
+      return res.status(400).json({ error: "status must be one of: 'at_camp', 'ready', 'picked_up'" });
+    }
+
+    const camper = await db.get(
+      `SELECT u.id, u.name, u.email, u.guardian_name, u.guardian_phone, u.cabin_id, c.name as cabin_name
+       FROM users u LEFT JOIN cabins c ON u.cabin_id = c.id
+       WHERE u.id = ? AND u.role = 'camper'`,
+      [req.params.id]
+    );
+    if (!camper) return res.status(404).json({ error: 'Camper not found' });
+
+    // Counselors can only update campers in their own cabin
+    if (req.user.role === 'counselor' && camper.cabin_id !== req.user.cabin_id) {
+      return res.status(403).json({ error: 'You can only update campers in your own cabin' });
+    }
+
+    await db.run('UPDATE users SET pickup_status = ? WHERE id = ?', [status, req.params.id]);
+
+    res.json({
+      id: camper.id,
+      name: camper.name,
+      pickup_status: status,
+      cabin_name: camper.cabin_name,
+    });
+
+    if (status === 'ready' && camper.email) {
+      sendPickupReadyEmail({
+        to: camper.email,
+        guardianName: camper.guardian_name,
+        camperName: camper.name,
+        counselorName: req.user.name,
+        cabinName: camper.cabin_name,
+      }).catch((e) => console.error('[email] pickup-ready failed:', e.message));
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to update pickup status' });
   }
 });
 

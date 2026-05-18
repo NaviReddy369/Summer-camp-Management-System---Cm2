@@ -60,9 +60,28 @@ npm run dev
 
 1. Push this repo to GitHub
 2. Import the project in [Vercel](https://vercel.com)
-3. Add a **Postgres** database from Vercel's Storage tab (free tier)
-4. Vercel auto-sets `POSTGRES_URL` — no manual env var config needed
+3. Add a **Postgres** database from Vercel's Storage tab (free tier) — sets `POSTGRES_URL` automatically
+4. Add email + frontend URL env vars in **Settings → Environment Variables**:
+   - `RESEND_API_KEY` — get one at [resend.com/api-keys](https://resend.com/api-keys)
+   - `RESEND_FROM_EMAIL` — e.g. `CM2 Camp <onboarding@resend.dev>` (or your verified domain)
+   - `FRONTEND_URL` — your live app URL, e.g. `https://cm2-camp.vercel.app`
 5. Deploy — the database auto-seeds on the first request
+
+> See `.env.example` for the full list of supported variables and local-dev defaults.
+
+## Email Notifications (Resend)
+
+The system sends transactional emails for these events (all non-blocking — API responses never wait for email delivery):
+
+| Trigger | Recipient | Email |
+|---|---|---|
+| Admin creates a camper | Camper email | **Welcome** with username + temp password |
+| Admin creates a counselor | Counselor email | **Welcome** with username + temp password |
+| Admin resets a password | User email | **Password Reset** with new temp password |
+| Counselor marks camper "Ready for Pickup" | Camper / guardian email | **Pickup Ready** notification |
+| Camper marked absent (bulk attendance) | Camper / guardian email | **Absence Alert** |
+
+If `RESEND_API_KEY` is not set, emails are silently skipped (a console warning is logged) — the rest of the app works normally.
 
 The app uses a dual-mode database layer:
 - **Local dev**: SQLite via `better-sqlite3` (zero config)

@@ -4,8 +4,15 @@ import Login from './pages/Login';
 import CamperDashboard from './pages/CamperDashboard';
 import CounselorDashboard from './pages/CounselorDashboard';
 import AdminDashboard from './pages/AdminDashboard';
+import ChangePassword from './pages/ChangePassword';
 import Navbar from './components/Navbar';
 import Chatbot from './components/Chatbot';
+
+const ROLE_ROUTES = { camper: '/camper', counselor: '/counselor', admin: '/admin' };
+
+function mustChange(u) {
+  return Number(u?.must_change_password) === 1;
+}
 
 function App() {
   const [user, setUser] = useState(null);
@@ -25,8 +32,11 @@ function App() {
     localStorage.setItem('cm2_token', token);
     localStorage.setItem('cm2_user', JSON.stringify(userData));
     setUser(userData);
-    const routes = { camper: '/camper', counselor: '/counselor', admin: '/admin' };
-    navigate(routes[userData.role] || '/');
+    if (mustChange(userData)) {
+      navigate('/change-password');
+    } else {
+      navigate(ROLE_ROUTES[userData.role] || '/');
+    }
   };
 
   const handleLogout = () => {
@@ -34,6 +44,13 @@ function App() {
     localStorage.removeItem('cm2_user');
     setUser(null);
     navigate('/');
+  };
+
+  const handlePasswordChanged = () => {
+    const updated = { ...user, must_change_password: 0 };
+    localStorage.setItem('cm2_user', JSON.stringify(updated));
+    setUser(updated);
+    navigate(ROLE_ROUTES[updated.role] || '/');
   };
 
   if (loading) {
@@ -47,14 +64,24 @@ function App() {
 
   const getDashboardRoute = () => {
     if (!user) return '/';
-    const routes = { camper: '/camper', counselor: '/counselor', admin: '/admin' };
-    return routes[user.role] || '/';
+    if (mustChange(user)) return '/change-password';
+    return ROLE_ROUTES[user.role] || '/';
   };
+
+  // Helper to guard role dashboards — also enforce password change
+  const protectedRoute = (role, Component) => {
+    if (!user) return <Navigate to="/" replace />;
+    if (mustChange(user)) return <Navigate to="/change-password" replace />;
+    if (user.role !== role) return <Navigate to="/" replace />;
+    return <Component user={user} />;
+  };
+
+  const showChrome = user && !mustChange(user);
 
   return (
     <div className="app">
-      {user && <Navbar user={user} onLogout={handleLogout} />}
-      {user && <Chatbot user={user} />}
+      {showChrome && <Navbar user={user} onLogout={handleLogout} />}
+      {showChrome && <Chatbot user={user} />}
       <Routes>
         <Route
           path="/"
@@ -63,23 +90,22 @@ function App() {
           }
         />
         <Route
-          path="/camper"
+          path="/change-password"
           element={
-            user?.role === 'camper' ? <CamperDashboard user={user} /> : <Navigate to="/" replace />
+            user ? (
+              <ChangePassword
+                user={user}
+                onPasswordChanged={handlePasswordChanged}
+                onLogout={handleLogout}
+              />
+            ) : (
+              <Navigate to="/" replace />
+            )
           }
         />
-        <Route
-          path="/counselor"
-          element={
-            user?.role === 'counselor' ? <CounselorDashboard user={user} /> : <Navigate to="/" replace />
-          }
-        />
-        <Route
-          path="/admin"
-          element={
-            user?.role === 'admin' ? <AdminDashboard user={user} /> : <Navigate to="/" replace />
-          }
-        />
+        <Route path="/camper" element={protectedRoute('camper', CamperDashboard)} />
+        <Route path="/counselor" element={protectedRoute('counselor', CounselorDashboard)} />
+        <Route path="/admin" element={protectedRoute('admin', AdminDashboard)} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </div>

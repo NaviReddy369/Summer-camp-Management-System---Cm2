@@ -93,6 +93,7 @@ const SQLITE_SCHEMA = `
     guardian_name TEXT,
     guardian_phone TEXT,
     must_change_password INTEGER DEFAULT 1,
+    pickup_status TEXT DEFAULT 'at_camp',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
   CREATE TABLE IF NOT EXISTS activities (
@@ -146,6 +147,7 @@ const POSTGRES_SCHEMA = `
     guardian_name TEXT,
     guardian_phone TEXT,
     must_change_password INTEGER DEFAULT 1,
+    pickup_status TEXT DEFAULT 'at_camp',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
   );
   CREATE TABLE IF NOT EXISTS activities (
@@ -196,6 +198,7 @@ async function migrateAddColumns() {
     { name: 'guardian_name', type: 'TEXT' },
     { name: 'guardian_phone', type: 'TEXT' },
     { name: 'must_change_password', type: 'INTEGER DEFAULT 1' },
+    { name: 'pickup_status', type: "TEXT DEFAULT 'at_camp'" },
   ];
 
   if (usePostgres) {
