@@ -89,7 +89,7 @@ export default function AdminDashboard({ user }) {
 
   return (
     <div className="dashboard">
-      <div className="welcome-card" style={{ background: 'linear-gradient(135deg, var(--primary), #E55A1B)' }}>
+      <div className="welcome-card" style={{ background: 'linear-gradient(135deg, var(--primary), var(--primary-dark))' }}>
         <div className="welcome-info">
           <div>
             <h2>Admin Dashboard ⭐</h2>
@@ -1402,7 +1402,7 @@ function CounselorScheduleBuilder({ schedule, counselors, onReload }) {
                   return (
                     <td key={date} className="schedule-cell">
                       {entry ? (
-                        <div className="schedule-pill" style={{ background: 'rgba(52,152,219,0.15)', borderLeft: '3px solid var(--info)' }}>
+                        <div className="schedule-pill" style={{ background: 'rgba(29,78,216,0.08)', borderLeft: '3px solid var(--primary)' }}>
                           <strong>{entry.duty}</strong>
                           <button onClick={() => del(entry.id)} className="schedule-pill-x"><X size={12} /></button>
                           {entry.notes && <div className="muted small">{entry.notes}</div>}

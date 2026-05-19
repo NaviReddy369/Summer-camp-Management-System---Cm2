@@ -1,14 +1,14 @@
-import { LogOut, TreePine } from 'lucide-react';
+import { LogOut } from 'lucide-react';
 
 const roleLabels = {
-  camper: 'Camper / Family',
+  camper: 'Family Portal',
   counselor: 'Counselor',
   admin: 'Admin',
 };
 
 const roleIcons = {
   camper: '👪',
-  counselor: '🧭',
+  counselor: '🛰️',
   admin: '⭐',
 };
 
@@ -16,11 +16,9 @@ export default function Navbar({ user, onLogout }) {
   return (
     <nav className="navbar">
       <div className="navbar-brand">
-        <div className="navbar-logo">
-          <TreePine size={22} />
-        </div>
+        <div className="navbar-logo">O</div>
         <div className="navbar-title">
-          CM2 <span>Summer Camp</span>
+          ORBIT <span>Camp</span>
         </div>
       </div>
       <div className="navbar-right">

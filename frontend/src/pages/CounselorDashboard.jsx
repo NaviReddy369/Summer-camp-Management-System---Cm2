@@ -318,7 +318,7 @@ export default function CounselorDashboard({ user }) {
                     return (
                       <td key={date} className="schedule-cell">
                         {entry ? (
-                          <div className="schedule-pill" style={{ background: 'rgba(52,152,219,0.15)', borderLeft: '3px solid var(--info)' }}>
+                          <div className="schedule-pill" style={{ background: 'rgba(29,78,216,0.08)', borderLeft: '3px solid var(--primary)' }}>
                             <strong>{entry.duty}</strong>
                             {entry.notes && <div className="muted small">{entry.notes}</div>}
                           </div>
