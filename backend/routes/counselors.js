@@ -11,14 +11,14 @@ function getLoginUrl() {
   return process.env.FRONTEND_URL || 'http://localhost:5173';
 }
 
-const COUNSELOR_FIELDS = `u.id, u.name, u.username, u.email, u.phone, u.age, u.cabin_id,
-  u.must_change_password, c.name as cabin_name`;
+const COUNSELOR_FIELDS = `u.id, u.name, u.username, u.email, u.phone, u.age, u.team_id,
+  u.must_change_password, t.name as team_name, t.team_color`;
 
-router.get('/', authenticateToken, requireRole('admin'), async (req, res) => {
+router.get('/', authenticateToken, requireRole('admin', 'counselor'), async (req, res) => {
   try {
     const counselors = await db.all(
       `SELECT ${COUNSELOR_FIELDS}
-       FROM users u LEFT JOIN cabins c ON u.cabin_id = c.id
+       FROM users u LEFT JOIN teams t ON u.team_id = t.id
        WHERE u.role = 'counselor'
        ORDER BY u.name`
     );
@@ -31,9 +31,10 @@ router.get('/', authenticateToken, requireRole('admin'), async (req, res) => {
 router.post('/', authenticateToken, requireRole('admin'), async (req, res) => {
   try {
     const {
-      name, email, phone, age, cabin_id,
+      name, email, phone, age, team_id, cabin_id,
       username: providedUsername, password: providedPassword,
     } = req.body;
+    const teamId = team_id ?? cabin_id ?? null;
 
     if (!name || !name.trim()) {
       return res.status(400).json({ error: 'Counselor name is required' });
@@ -55,17 +56,16 @@ router.post('/', authenticateToken, requireRole('admin'), async (req, res) => {
 
     const result = await db.run(
       `INSERT INTO users
-         (name, username, password_hash, role, cabin_id, age, email, phone, must_change_password)
+         (name, username, password_hash, role, team_id, age, email, phone, must_change_password)
        VALUES (?, ?, ?, 'counselor', ?, ?, ?, ?, 1)`,
-      [name.trim(), username, password_hash, cabin_id || null, age || null,
+      [name.trim(), username, password_hash, teamId || null, age || null,
        email.trim(), phone || null]
     );
 
-    // If a cabin was specified and has no counselor yet, link them
-    if (cabin_id) {
-      const cabin = await db.get('SELECT counselor_id FROM cabins WHERE id = ?', [cabin_id]);
-      if (cabin && !cabin.counselor_id) {
-        await db.run('UPDATE cabins SET counselor_id = ? WHERE id = ?', [result.lastInsertRowid, cabin_id]);
+    if (teamId) {
+      const team = await db.get('SELECT counselor_id FROM teams WHERE id = ?', [teamId]);
+      if (team && !team.counselor_id) {
+        await db.run('UPDATE teams SET counselor_id = ? WHERE id = ?', [result.lastInsertRowid, teamId]);
       }
     }
 
@@ -77,7 +77,7 @@ router.post('/', authenticateToken, requireRole('admin'), async (req, res) => {
         email: email.trim(),
         phone: phone || null,
         role: 'counselor',
-        cabin_id: cabin_id || null,
+        team_id: teamId || null,
         age: age || null,
       },
       credentials: {
@@ -103,13 +103,14 @@ router.post('/', authenticateToken, requireRole('admin'), async (req, res) => {
 
 router.put('/:id', authenticateToken, requireRole('admin'), async (req, res) => {
   try {
-    const { name, email, phone, age, cabin_id } = req.body;
+    const { name, email, phone, age, team_id, cabin_id } = req.body;
+    const teamId = team_id ?? cabin_id ?? null;
 
     await db.run(
       `UPDATE users
-         SET name = ?, email = ?, phone = ?, age = ?, cabin_id = ?
+         SET name = ?, email = ?, phone = ?, age = ?, team_id = ?
        WHERE id = ? AND role = 'counselor'`,
-      [name, email || null, phone || null, age || null, cabin_id || null, req.params.id]
+      [name, email || null, phone || null, age || null, teamId || null, req.params.id]
     );
 
     res.json({ message: 'Counselor updated' });
@@ -158,8 +159,10 @@ router.post('/:id/reset-password', authenticateToken, requireRole('admin'), asyn
 
 router.delete('/:id', authenticateToken, requireRole('admin'), async (req, res) => {
   try {
-    // Unlink from any cabins they lead
-    await db.run('UPDATE cabins SET counselor_id = NULL WHERE counselor_id = ?', [req.params.id]);
+    await db.run('UPDATE teams SET counselor_id = NULL WHERE counselor_id = ?', [req.params.id]);
+    await db.run('DELETE FROM admin_notes WHERE to_user_id = ?', [req.params.id]);
+    await db.run('DELETE FROM announcement_acknowledgements WHERE user_id = ?', [req.params.id]);
+    await db.run('DELETE FROM counselor_schedule WHERE counselor_id = ?', [req.params.id]);
     await db.run("DELETE FROM users WHERE id = ? AND role = 'counselor'", [req.params.id]);
     res.json({ message: 'Counselor deleted' });
   } catch (err) {

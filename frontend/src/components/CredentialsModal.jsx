@@ -37,7 +37,7 @@ export default function CredentialsModal({ data, onClose }) {
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h2>✅ {role === 'counselor' ? 'Counselor' : 'Camper'} Account Created</h2>
+          <h2>✅ {({ camper: 'Camper / Family', counselor: 'Counselor', admin: 'Admin' })[role] || 'Account'} Account Created</h2>
           <button className="modal-close" onClick={onClose}><X size={18} /></button>
         </div>
         <div className="modal-body">

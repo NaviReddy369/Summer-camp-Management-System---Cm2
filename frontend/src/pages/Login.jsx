@@ -3,7 +3,7 @@ import { User, Lock, LogIn, Eye, EyeOff } from 'lucide-react';
 import api from '../api';
 
 const tabs = [
-  { key: 'camper',    label: 'Camper',    icon: '🚀', role: 'Explorer'  },
+  { key: 'camper',    label: 'Camper',    icon: '👪', role: 'Family Portal' },
   { key: 'counselor', label: 'Counselor', icon: '🛰️', role: 'Navigator' },
   { key: 'admin',     label: 'Admin',     icon: '⭐', role: 'Commander' },
 ];

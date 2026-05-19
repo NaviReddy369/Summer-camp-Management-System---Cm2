@@ -204,6 +204,7 @@ async function sendAnnouncementEmail({ toList, title, body, audience }) {
 }
 
 module.exports = {
+  sendEmail,
   sendWelcomeEmail,
   sendPasswordResetEmail,
   sendPickupReadyEmail,

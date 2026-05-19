@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { MessageCircle, X, Send, Bot, User } from 'lucide-react';
 import api from '../api';
 
-const WELCOME = "Hey! 👋 I'm the CM2 Camp Bot. Ask me about **activities**, **schedule**, **cabins**, **announcements**, or type **help** to see everything I know!";
+const WELCOME = "Hey! 👋 I'm the CM2 Camp Bot. Ask me about **activities**, **schedule**, **teams**, **announcements**, or type **help** to see everything I know!";
 
 export default function Chatbot({ user }) {
   const [open, setOpen] = useState(false);

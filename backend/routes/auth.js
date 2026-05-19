@@ -15,7 +15,9 @@ router.post('/login', async (req, res) => {
     }
 
     const user = await db.get(
-      'SELECT u.*, c.name as cabin_name FROM users u LEFT JOIN cabins c ON u.cabin_id = c.id WHERE u.username = ?',
+      `SELECT u.*, t.name as team_name, t.team_color
+       FROM users u LEFT JOIN teams t ON u.team_id = t.id
+       WHERE u.username = ?`,
       [username]
     );
 
@@ -28,7 +30,7 @@ router.post('/login', async (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: user.id, username: user.username, role: user.role, name: user.name, cabin_id: user.cabin_id },
+      { id: user.id, username: user.username, role: user.role, name: user.name, team_id: user.team_id },
       JWT_SECRET,
       { expiresIn: '24h' }
     );
@@ -40,14 +42,17 @@ router.post('/login', async (req, res) => {
         name: user.name,
         username: user.username,
         role: user.role,
-        cabin_id: user.cabin_id,
-        cabin_name: user.cabin_name,
+        team_id: user.team_id,
+        team_name: user.team_name,
+        team_color: user.team_color,
         age: user.age,
         email: user.email,
+        parent_of_camper_id: user.parent_of_camper_id || null,
         must_change_password: Number(user.must_change_password ?? 0) === 1 ? 1 : 0,
       },
     });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: 'Login failed' });
   }
 });
@@ -55,9 +60,10 @@ router.post('/login', async (req, res) => {
 router.get('/me', authenticateToken, async (req, res) => {
   try {
     const user = await db.get(
-      `SELECT u.id, u.name, u.username, u.role, u.cabin_id, u.age, u.email, u.must_change_password,
-              c.name as cabin_name
-       FROM users u LEFT JOIN cabins c ON u.cabin_id = c.id WHERE u.id = ?`,
+      `SELECT u.id, u.name, u.username, u.role, u.team_id, u.age, u.email,
+              u.must_change_password, u.parent_of_camper_id,
+              t.name as team_name, t.team_color
+       FROM users u LEFT JOIN teams t ON u.team_id = t.id WHERE u.id = ?`,
       [req.user.id]
     );
 

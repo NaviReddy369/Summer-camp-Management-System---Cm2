@@ -1,13 +1,13 @@
 import { LogOut, TreePine } from 'lucide-react';
 
 const roleLabels = {
-  camper: 'Camper',
+  camper: 'Camper / Family',
   counselor: 'Counselor',
   admin: 'Admin',
 };
 
 const roleIcons = {
-  camper: '🏕️',
+  camper: '👪',
   counselor: '🧭',
   admin: '⭐',
 };

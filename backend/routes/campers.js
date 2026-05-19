@@ -7,8 +7,9 @@ const { sendWelcomeEmail, sendPasswordResetEmail, sendPickupReadyEmail } = requi
 
 const router = express.Router();
 
-const CAMPER_FIELDS = `u.id, u.name, u.username, u.age, u.cabin_id, u.email, u.phone,
-  u.guardian_name, u.guardian_phone, u.pickup_status, u.must_change_password, c.name as cabin_name`;
+const CAMPER_FIELDS = `u.id, u.name, u.username, u.age, u.team_id, u.email, u.phone,
+  u.guardian_name, u.guardian_phone, u.pickup_status, u.must_change_password,
+  t.name as team_name, t.team_color`;
 
 function getLoginUrl() {
   return process.env.FRONTEND_URL || 'http://localhost:5173';
@@ -21,15 +22,15 @@ router.get('/', authenticateToken, async (req, res) => {
     if (req.user.role === 'counselor') {
       campers = await db.all(
         `SELECT ${CAMPER_FIELDS}
-         FROM users u LEFT JOIN cabins c ON u.cabin_id = c.id
-         WHERE u.role = 'camper' AND u.cabin_id = ?
+         FROM users u LEFT JOIN teams t ON u.team_id = t.id
+         WHERE u.role = 'camper' AND u.team_id = ?
          ORDER BY u.name`,
-        [req.user.cabin_id]
+        [req.user.team_id]
       );
     } else {
       campers = await db.all(
         `SELECT ${CAMPER_FIELDS}
-         FROM users u LEFT JOIN cabins c ON u.cabin_id = c.id
+         FROM users u LEFT JOIN teams t ON u.team_id = t.id
          WHERE u.role = 'camper'
          ORDER BY u.name`
       );
@@ -41,29 +42,50 @@ router.get('/', authenticateToken, async (req, res) => {
   }
 });
 
-router.get('/cabin/:cabinId', authenticateToken, async (req, res) => {
+router.get('/team/:teamId', authenticateToken, async (req, res) => {
   try {
     const campers = await db.all(
       `SELECT ${CAMPER_FIELDS}
-       FROM users u LEFT JOIN cabins c ON u.cabin_id = c.id
-       WHERE u.role = 'camper' AND u.cabin_id = ?
+       FROM users u LEFT JOIN teams t ON u.team_id = t.id
+       WHERE u.role = 'camper' AND u.team_id = ?
        ORDER BY u.name`,
-      [req.params.cabinId]
+      [req.params.teamId]
     );
-
     res.json({ campers });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch cabin campers' });
+    res.status(500).json({ error: 'Failed to fetch team campers' });
+  }
+});
+
+router.get('/:id', authenticateToken, async (req, res) => {
+  try {
+    const camper = await db.get(
+      `SELECT ${CAMPER_FIELDS}
+       FROM users u LEFT JOIN teams t ON u.team_id = t.id
+       WHERE u.role = 'camper' AND u.id = ?`,
+      [req.params.id]
+    );
+    if (!camper) return res.status(404).json({ error: 'Camper not found' });
+
+    // Counselors can only see campers in their own team
+    if (req.user.role === 'counselor' && camper.team_id !== req.user.team_id) {
+      return res.status(403).json({ error: 'You can only view campers in your own team' });
+    }
+
+    res.json({ camper });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch camper' });
   }
 });
 
 router.post('/', authenticateToken, requireRole('admin'), async (req, res) => {
   try {
     const {
-      name, email, age, cabin_id,
+      name, email, age, team_id, cabin_id, // accept legacy cabin_id too
       guardian_name, guardian_phone,
       username: providedUsername, password: providedPassword,
     } = req.body;
+    const teamId = team_id ?? cabin_id ?? null;
 
     if (!name || !name.trim()) {
       return res.status(400).json({ error: 'Camper name is required' });
@@ -85,9 +107,9 @@ router.post('/', authenticateToken, requireRole('admin'), async (req, res) => {
 
     const result = await db.run(
       `INSERT INTO users
-         (name, username, password_hash, role, cabin_id, age, email, guardian_name, guardian_phone, must_change_password)
+         (name, username, password_hash, role, team_id, age, email, guardian_name, guardian_phone, must_change_password)
        VALUES (?, ?, ?, 'camper', ?, ?, ?, ?, ?, 1)`,
-      [name.trim(), username, password_hash, cabin_id || null, age || null,
+      [name.trim(), username, password_hash, teamId || null, age || null,
        email.trim(), guardian_name || null, guardian_phone || null]
     );
 
@@ -98,7 +120,7 @@ router.post('/', authenticateToken, requireRole('admin'), async (req, res) => {
         username,
         email: email.trim(),
         role: 'camper',
-        cabin_id: cabin_id || null,
+        team_id: teamId || null,
         age: age || null,
         guardian_name: guardian_name || null,
         guardian_phone: guardian_phone || null,
@@ -126,13 +148,14 @@ router.post('/', authenticateToken, requireRole('admin'), async (req, res) => {
 
 router.put('/:id', authenticateToken, requireRole('admin'), async (req, res) => {
   try {
-    const { name, cabin_id, age, email, guardian_name, guardian_phone } = req.body;
+    const { name, team_id, cabin_id, age, email, guardian_name, guardian_phone } = req.body;
+    const teamId = team_id ?? cabin_id ?? null;
 
     await db.run(
       `UPDATE users
-         SET name = ?, cabin_id = ?, age = ?, email = ?, guardian_name = ?, guardian_phone = ?
+         SET name = ?, team_id = ?, age = ?, email = ?, guardian_name = ?, guardian_phone = ?
        WHERE id = ? AND role = 'camper'`,
-      [name, cabin_id || null, age || null, email || null,
+      [name, teamId || null, age || null, email || null,
        guardian_name || null, guardian_phone || null, req.params.id]
     );
 
@@ -190,16 +213,15 @@ router.put('/:id/pickup', authenticateToken, requireRole('counselor', 'admin'), 
     }
 
     const camper = await db.get(
-      `SELECT u.id, u.name, u.email, u.guardian_name, u.guardian_phone, u.cabin_id, c.name as cabin_name
-       FROM users u LEFT JOIN cabins c ON u.cabin_id = c.id
+      `SELECT u.id, u.name, u.email, u.guardian_name, u.guardian_phone, u.team_id, t.name as team_name
+       FROM users u LEFT JOIN teams t ON u.team_id = t.id
        WHERE u.id = ? AND u.role = 'camper'`,
       [req.params.id]
     );
     if (!camper) return res.status(404).json({ error: 'Camper not found' });
 
-    // Counselors can only update campers in their own cabin
-    if (req.user.role === 'counselor' && camper.cabin_id !== req.user.cabin_id) {
-      return res.status(403).json({ error: 'You can only update campers in your own cabin' });
+    if (req.user.role === 'counselor' && camper.team_id !== req.user.team_id) {
+      return res.status(403).json({ error: 'You can only update campers in your own team' });
     }
 
     await db.run('UPDATE users SET pickup_status = ? WHERE id = ?', [status, req.params.id]);
@@ -208,7 +230,7 @@ router.put('/:id/pickup', authenticateToken, requireRole('counselor', 'admin'), 
       id: camper.id,
       name: camper.name,
       pickup_status: status,
-      cabin_name: camper.cabin_name,
+      team_name: camper.team_name,
     });
 
     if (status === 'ready' && camper.email) {
@@ -217,7 +239,7 @@ router.put('/:id/pickup', authenticateToken, requireRole('counselor', 'admin'), 
         guardianName: camper.guardian_name,
         camperName: camper.name,
         counselorName: req.user.name,
-        cabinName: camper.cabin_name,
+        cabinName: camper.team_name,
       }).catch((e) => console.error('[email] pickup-ready failed:', e.message));
     }
   } catch (err) {
@@ -229,6 +251,9 @@ router.put('/:id/pickup', authenticateToken, requireRole('counselor', 'admin'), 
 router.delete('/:id', authenticateToken, requireRole('admin'), async (req, res) => {
   try {
     await db.run('DELETE FROM attendance WHERE camper_id = ?', [req.params.id]);
+    await db.run('DELETE FROM announcement_acknowledgements WHERE user_id = ?', [req.params.id]);
+    await db.run('DELETE FROM camper_special_notes WHERE camper_id = ?', [req.params.id]);
+    await db.run('DELETE FROM admin_notes WHERE to_user_id = ?', [req.params.id]);
     await db.run('DELETE FROM users WHERE id = ? AND role = ?', [req.params.id, 'camper']);
     res.json({ message: 'Camper deleted' });
   } catch (err) {

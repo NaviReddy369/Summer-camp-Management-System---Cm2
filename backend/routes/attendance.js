@@ -7,7 +7,6 @@ const router = express.Router();
 
 function formatHumanDate(dateStr) {
   try {
-    // dateStr is YYYY-MM-DD — add midday UTC to avoid timezone slippage
     const d = new Date(`${dateStr}T12:00:00`);
     if (isNaN(d.getTime())) return dateStr;
     return d.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
@@ -18,13 +17,14 @@ function formatHumanDate(dateStr) {
 
 router.get('/', authenticateToken, async (req, res) => {
   try {
-    const { camper_id, date, cabin_id } = req.query;
+    const { camper_id, date } = req.query;
+    const teamId = req.query.team_id ?? req.query.cabin_id;
 
     let query = `
-      SELECT a.*, u.name as camper_name, u.cabin_id, c.name as cabin_name
+      SELECT a.*, u.name as camper_name, u.team_id, t.name as team_name
       FROM attendance a
       JOIN users u ON a.camper_id = u.id
-      LEFT JOIN cabins c ON u.cabin_id = c.id
+      LEFT JOIN teams t ON u.team_id = t.id
     `;
     const params = [];
     const conditions = [];
@@ -37,9 +37,9 @@ router.get('/', authenticateToken, async (req, res) => {
       conditions.push('a.date = ?');
       params.push(date);
     }
-    if (cabin_id) {
-      conditions.push('u.cabin_id = ?');
-      params.push(cabin_id);
+    if (teamId) {
+      conditions.push('u.team_id = ?');
+      params.push(teamId);
     }
 
     if (conditions.length) {
@@ -48,6 +48,7 @@ router.get('/', authenticateToken, async (req, res) => {
     query += ' ORDER BY a.date DESC, u.name';
 
     const attendance = await db.all(query, params);
+    attendance.forEach((a) => { a.cabin_name = a.team_name; });
     res.json({ attendance });
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch attendance' });
@@ -108,7 +109,6 @@ router.post('/bulk', authenticateToken, requireRole('counselor', 'admin'), async
           'UPDATE attendance SET present = ?, notes = ? WHERE camper_id = ? AND date = ?',
           [presentInt, record.notes || null, record.camper_id, record.date]
         );
-        // Only notify if the status flipped to absent
         if (!record.present && existing.present === 1) {
           newlyAbsent.push(record);
         }

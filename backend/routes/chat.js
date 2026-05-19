@@ -7,7 +7,7 @@ const router = express.Router();
 const GREETINGS = /\b(hi|hello|hey|howdy|sup|yo|good morning|good afternoon)\b/i;
 const SCHEDULE_KW = /\b(schedule|timetable|when|what time|what day|calendar)\b/i;
 const ACTIVITY_KW = /\b(activit|swimming|archery|arts|crafts|sports|bonfire|hiking|canoeing|nature|talent|climbing|things to do|fun)\b/i;
-const CABIN_KW = /\b(cabin|eagle|falcon|bear|my cabin|cabin mates|roommate|bunk)\b/i;
+const TEAM_KW = /\b(team|cabin|eagle|falcon|bear|my team|teammate|teammates|roommate|bunk)\b/i;
 const COUNSELOR_KW = /\b(counselor|counsellor|leader|who is my counselor|staff)\b/i;
 const ATTENDANCE_KW = /\b(attendance|absent|present|miss|missed|show up)\b/i;
 const ANNOUNCEMENT_KW = /\b(announcement|news|update|notice|whats new|what's new)\b/i;
@@ -19,7 +19,7 @@ router.post('/', authenticateToken, async (req, res) => {
   try {
     const { message } = req.body;
     if (!message || !message.trim()) {
-      return res.json({ reply: "I didn't catch that. Try asking me about activities, schedule, or cabins!" });
+      return res.json({ reply: "I didn't catch that. Try asking me about activities, schedule, or teams!" });
     }
 
     const msg = message.trim();
@@ -28,8 +28,8 @@ router.post('/', authenticateToken, async (req, res) => {
 
     if (GREETINGS.test(msg)) {
       const greetings = [
-        `Hey ${user.name}! 👋 Welcome to CM2 Camp Chat! Ask me about activities, schedule, cabins, or announcements.`,
-        `Hi there, ${user.name}! 🏕️ How can I help? I know about schedules, activities, cabins, and more!`,
+        `Hey ${user.name}! 👋 Welcome to CM2 Camp Chat! Ask me about activities, schedule, teams, or announcements.`,
+        `Hi there, ${user.name}! 🏕️ How can I help? I know about schedules, activities, teams, and more!`,
         `Hello ${user.name}! 🌞 Ready to chat about camp? Ask me anything!`,
       ];
       reply = greetings[Math.floor(Math.random() * greetings.length)];
@@ -37,7 +37,7 @@ router.post('/', authenticateToken, async (req, res) => {
       reply = `Here's what I can help with! 🤓\n\n` +
         `📅 **Schedule** — "What's my schedule?" or "What's on Monday?"\n` +
         `🎯 **Activities** — "What activities are there?"\n` +
-        `🏠 **Cabins** — "Who's in my cabin?" or "Tell me about Eagle cabin"\n` +
+        `🏠 **Teams** — "Who's on my team?" or "Tell me about Eagle team"\n` +
         `👤 **Counselors** — "Who is my counselor?"\n` +
         `📋 **Attendance** — "How's my attendance?"\n` +
         `📢 **Announcements** — "Any new announcements?"\n` +
@@ -46,8 +46,8 @@ router.post('/', authenticateToken, async (req, res) => {
       reply = await handleSchedule(msg, user);
     } else if (ACTIVITY_KW.test(msg)) {
       reply = await handleActivities(msg);
-    } else if (CABIN_KW.test(msg)) {
-      reply = await handleCabin(msg, user);
+    } else if (TEAM_KW.test(msg)) {
+      reply = await handleTeam(msg, user);
     } else if (COUNSELOR_KW.test(msg)) {
       reply = await handleCounselor(msg, user);
     } else if (ATTENDANCE_KW.test(msg)) {
@@ -61,13 +61,13 @@ router.post('/', authenticateToken, async (req, res) => {
     } else if (CAMP_KW.test(msg)) {
       reply = "🏕️ **Community Matters 2 (CM2)** is an extraordinary youth summer camp!\n\n" +
         "We offer swimming, archery, arts & crafts, hiking, team sports, bonfire nights, and much more. " +
-        "Every camper is assigned to a cabin with a dedicated counselor. " +
+        "Every camper is assigned to a team with a dedicated counselor. " +
         "It's all about fun, friendship, and adventure! 🌟";
     } else {
       const fallbacks = [
-        `Hmm, I'm not sure about that! 🤔 Try asking about **schedule**, **activities**, **cabins**, or **announcements**.`,
+        `Hmm, I'm not sure about that! 🤔 Try asking about **schedule**, **activities**, **teams**, or **announcements**.`,
         `Great question, but I don't have info on that yet! Ask me about camp **activities**, **schedule**, or type **help** to see what I know. 😊`,
-        `I'm still learning! 📚 I can help with **schedule**, **activities**, **cabins**, **attendance**, and **announcements**. Type **help** for details!`,
+        `I'm still learning! 📚 I can help with **schedule**, **activities**, **teams**, **attendance**, and **announcements**. Type **help** for details!`,
       ];
       reply = fallbacks[Math.floor(Math.random() * fallbacks.length)];
     }
@@ -83,24 +83,25 @@ async function handleSchedule(msg, user) {
   const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
   const dayMatch = days.find(d => msg.toLowerCase().includes(d));
 
-  let cabinId = user.cabin_id;
+  let teamId = user.team_id;
   if (user.role === 'admin') {
-    const firstCabin = await db.get('SELECT id FROM cabins LIMIT 1');
-    cabinId = firstCabin?.id || 1;
+    const first = await db.get('SELECT id FROM teams LIMIT 1');
+    teamId = first?.id || 1;
   }
 
-  if (!cabinId) {
-    return "You're not assigned to a cabin yet, so I can't show a schedule. Ask your admin! 📋";
+  if (!teamId) {
+    return "No team assigned yet, so I can't show a schedule. Ask the admin! 📋";
   }
 
   let schedule;
   if (dayMatch) {
     const dateMap = { monday: '2026-05-11', tuesday: '2026-05-12', wednesday: '2026-05-13', thursday: '2026-05-14', friday: '2026-05-15' };
     schedule = await db.all(
-      `SELECT s.date, a.name, a.time_slot, a.location FROM schedule s
-       JOIN activities a ON s.activity_id = a.id WHERE s.cabin_id = ? AND s.date = ?
-       ORDER BY a.time_slot`,
-      [cabinId, dateMap[dayMatch]]
+      `SELECT s.date, a.name, COALESCE(s.time_slot, a.time_slot) as time_slot, a.location
+       FROM schedule s JOIN activities a ON s.activity_id = a.id
+       WHERE s.team_id = ? AND s.date = ?
+       ORDER BY COALESCE(s.time_slot, a.time_slot)`,
+      [teamId, dateMap[dayMatch]]
     );
     if (schedule.length === 0) return `No activities scheduled for ${dayMatch.charAt(0).toUpperCase() + dayMatch.slice(1)}. Free day! 🌞`;
     let reply = `📅 **${dayMatch.charAt(0).toUpperCase() + dayMatch.slice(1)}'s Schedule:**\n\n`;
@@ -109,10 +110,11 @@ async function handleSchedule(msg, user) {
   }
 
   schedule = await db.all(
-    `SELECT s.date, a.name, a.time_slot, a.location FROM schedule s
-     JOIN activities a ON s.activity_id = a.id WHERE s.cabin_id = ?
-     ORDER BY s.date, a.time_slot`,
-    [cabinId]
+    `SELECT s.date, a.name, COALESCE(s.time_slot, a.time_slot) as time_slot, a.location
+     FROM schedule s JOIN activities a ON s.activity_id = a.id
+     WHERE s.team_id = ?
+     ORDER BY s.date, COALESCE(s.time_slot, a.time_slot)`,
+    [teamId]
   );
   if (schedule.length === 0) return "No schedule found yet. The fun is coming soon! 🏕️";
 
@@ -141,54 +143,54 @@ async function handleActivities(msg) {
   return reply;
 }
 
-async function handleCabin(msg, user) {
-  const cabinNames = ['eagle', 'falcon', 'bear'];
-  const specificCabin = cabinNames.find(c => msg.toLowerCase().includes(c));
+async function handleTeam(msg, user) {
+  const teamNames = ['eagle', 'falcon', 'bear'];
+  const specific = teamNames.find(t => msg.toLowerCase().includes(t));
 
-  if (specificCabin) {
-    const cabin = await db.get(
-      `SELECT c.*, u.name as counselor_name FROM cabins c LEFT JOIN users u ON c.counselor_id = u.id WHERE LOWER(c.name) = ?`,
-      [specificCabin]
+  if (specific) {
+    const team = await db.get(
+      `SELECT t.*, u.name as counselor_name FROM teams t LEFT JOIN users u ON t.counselor_id = u.id WHERE LOWER(t.name) = ?`,
+      [specific]
     );
-    if (!cabin) return `I couldn't find a cabin called "${specificCabin}". We have Eagle, Falcon, and Bear! 🏠`;
-    const campers = await db.all(`SELECT name, age FROM users WHERE cabin_id = ? AND role = 'camper' ORDER BY name`, [cabin.id]);
-    let reply = `🏠 **${cabin.name} Cabin**\n\n👤 Counselor: ${cabin.counselor_name || 'Unassigned'}\n🎨 Color: ${cabin.theme_color}\n👥 Campers (${campers.length}):\n`;
+    if (!team) return `I couldn't find a team called "${specific}". We have Eagle, Falcon, and Bear! 🏠`;
+    const campers = await db.all(`SELECT name, age FROM users WHERE team_id = ? AND role = 'camper' ORDER BY name`, [team.id]);
+    let reply = `🏠 **${team.name} Team**\n\n👤 Counselor: ${team.counselor_name || 'Unassigned'}\n🎨 Color: ${team.team_color}\n👥 Campers (${campers.length}):\n`;
     campers.forEach(c => { reply += `  • ${c.name} (age ${c.age})\n`; });
     return reply;
   }
 
-  if (user.cabin_id) {
-    const cabin = await db.get(
-      `SELECT c.*, u.name as counselor_name FROM cabins c LEFT JOIN users u ON c.counselor_id = u.id WHERE c.id = ?`,
-      [user.cabin_id]
+  if (user.team_id) {
+    const team = await db.get(
+      `SELECT t.*, u.name as counselor_name FROM teams t LEFT JOIN users u ON t.counselor_id = u.id WHERE t.id = ?`,
+      [user.team_id]
     );
-    const campers = await db.all(`SELECT name, age FROM users WHERE cabin_id = ? AND role = 'camper' ORDER BY name`, [user.cabin_id]);
-    let reply = `🏠 **Your Cabin: ${cabin.name}**\n\n👤 Counselor: ${cabin.counselor_name || 'Unassigned'}\n👥 Cabin Mates (${campers.length}):\n`;
+    const campers = await db.all(`SELECT name, age FROM users WHERE team_id = ? AND role = 'camper' ORDER BY name`, [user.team_id]);
+    let reply = `🏠 **Your Team: ${team.name}**\n\n👤 Counselor: ${team.counselor_name || 'Unassigned'}\n👥 Team Mates (${campers.length}):\n`;
     campers.forEach(c => { reply += `  • ${c.name} (age ${c.age})\n`; });
     return reply;
   }
 
-  const cabins = await db.all(`SELECT c.name, (SELECT COUNT(*) FROM users WHERE cabin_id = c.id AND role = 'camper') as count FROM cabins c`);
-  let reply = "🏠 **Camp Cabins:**\n\n";
-  cabins.forEach(c => { reply += `• **${c.name}** — ${c.count} campers\n`; });
+  const teams = await db.all(`SELECT t.name, (SELECT COUNT(*) FROM users WHERE team_id = t.id AND role = 'camper') as count FROM teams t`);
+  let reply = "🏠 **Camp Teams:**\n\n";
+  teams.forEach(c => { reply += `• **${c.name}** — ${c.count} campers\n`; });
   return reply;
 }
 
 async function handleCounselor(msg, user) {
-  if (user.cabin_id) {
-    const cabin = await db.get(
-      `SELECT c.name, u.name as counselor_name FROM cabins c LEFT JOIN users u ON c.counselor_id = u.id WHERE c.id = ?`,
-      [user.cabin_id]
+  if (user.team_id) {
+    const team = await db.get(
+      `SELECT t.name, u.name as counselor_name FROM teams t LEFT JOIN users u ON t.counselor_id = u.id WHERE t.id = ?`,
+      [user.team_id]
     );
-    if (cabin?.counselor_name) {
-      return `👤 Your counselor for **${cabin.name} Cabin** is **${cabin.counselor_name}**! Feel free to reach out to them anytime. 🧭`;
+    if (team?.counselor_name) {
+      return `👤 Your counselor for **${team.name} Team** is **${team.counselor_name}**! Feel free to reach out to them anytime. 🧭`;
     }
   }
   const counselors = await db.all(
-    `SELECT u.name, c.name as cabin_name FROM users u LEFT JOIN cabins c ON u.cabin_id = c.id WHERE u.role = 'counselor' ORDER BY u.name`
+    `SELECT u.name, t.name as team_name FROM users u LEFT JOIN teams t ON u.team_id = t.id WHERE u.role = 'counselor' ORDER BY u.name`
   );
   let reply = "👤 **Camp Counselors:**\n\n";
-  counselors.forEach(c => { reply += `• **${c.name}** — ${c.cabin_name || 'Unassigned'} Cabin\n`; });
+  counselors.forEach(c => { reply += `• **${c.name}** — ${c.team_name || 'Unassigned'} Team\n`; });
   return reply;
 }
 
@@ -211,14 +213,17 @@ async function handleAttendance(user) {
 }
 
 async function handleAnnouncements(user) {
-  let query = `SELECT a.title, a.body, u.name as author_name, a.created_at
+  let query = `SELECT a.title, a.body, u.name as author_name, a.created_at, a.audience
                FROM announcements a JOIN users u ON a.author_id = u.id`;
+  const params = [];
   if (user.role === 'camper') {
-    query += ` WHERE a.audience IN ('all', 'camper')`;
+    query += ` WHERE a.audience IN ('all', 'campers')`;
+  } else if (user.role === 'counselor') {
+    query += ` WHERE a.audience IN ('all', 'counselors')`;
   }
   query += ' ORDER BY a.created_at DESC LIMIT 3';
 
-  const announcements = await db.all(query);
+  const announcements = await db.all(query, params);
   if (announcements.length === 0) return "📢 No announcements yet. Stay tuned for camp news!";
 
   let reply = "📢 **Latest Announcements:**\n\n";
