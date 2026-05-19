@@ -210,485 +210,493 @@ input, select, textarea {
 }
 
 /* ========================= */
-/* ORBIT LOGIN PAGE          */
+/* ORBIT LOGIN PAGE (LIGHT)  */
 /* ========================= */
 
-.orbit-page {
+/* ── Page shell ── */
+.lp-page {
   min-height: 100vh;
-  background: #020c1e;
+  background: linear-gradient(145deg, #eef5ff 0%, #f0fdf8 45%, #fffceb 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
   overflow: hidden;
-  padding: 2rem 1rem;
+  padding: 2.5rem 1.5rem;
 }
 
-/* ── Starfield ── */
-.orbit-stars {
-  position: absolute;
-  inset: 0;
-  background-image:
-    radial-gradient(1px 1px at 8%  12%, rgba(255,255,255,0.9) 0%, transparent 100%),
-    radial-gradient(1px 1px at 22% 38%, rgba(255,255,255,0.7) 0%, transparent 100%),
-    radial-gradient(1.5px 1.5px at 38% 7%, rgba(255,255,255,0.8) 0%, transparent 100%),
-    radial-gradient(1px 1px at 53% 58%, rgba(255,255,255,0.6) 0%, transparent 100%),
-    radial-gradient(2px 2px at 68% 18%, rgba(59,130,246,0.8) 0%, transparent 100%),
-    radial-gradient(1px 1px at 79% 73%, rgba(255,255,255,0.7) 0%, transparent 100%),
-    radial-gradient(1.5px 1.5px at 91% 44%, rgba(16,185,129,0.8) 0%, transparent 100%),
-    radial-gradient(1px 1px at 14% 83%, rgba(255,255,255,0.6) 0%, transparent 100%),
-    radial-gradient(1px 1px at 34% 70%, rgba(255,255,255,0.5) 0%, transparent 100%),
-    radial-gradient(2px 2px at 59% 91%, rgba(59,130,246,0.55) 0%, transparent 100%),
-    radial-gradient(1px 1px at 48% 28%, rgba(255,255,255,0.8) 0%, transparent 100%),
-    radial-gradient(1px 1px at 74% 53%, rgba(255,255,255,0.5) 0%, transparent 100%),
-    radial-gradient(1.5px 1.5px at 4%  58%, rgba(255,255,255,0.7) 0%, transparent 100%),
-    radial-gradient(1px 1px at 96% 9%,  rgba(255,255,255,0.8) 0%, transparent 100%),
-    radial-gradient(2px 2px at 19% 53%, rgba(245,158,11,0.6) 0%, transparent 100%);
-  animation: orbitTwinkle 8s ease-in-out infinite alternate;
-}
-.orbit-stars-2 {
-  position: absolute;
-  inset: 0;
-  background-image:
-    radial-gradient(1px 1px at 6%  29%, rgba(255,255,255,0.6) 0%, transparent 100%),
-    radial-gradient(1.5px 1.5px at 32% 19%, rgba(59,130,246,0.5) 0%, transparent 100%),
-    radial-gradient(1px 1px at 61% 44%, rgba(255,255,255,0.7) 0%, transparent 100%),
-    radial-gradient(2px 2px at 84% 29%, rgba(255,255,255,0.8) 0%, transparent 100%),
-    radial-gradient(1px 1px at 44% 79%, rgba(255,255,255,0.5) 0%, transparent 100%),
-    radial-gradient(1.5px 1.5px at 17% 94%, rgba(16,185,129,0.65) 0%, transparent 100%),
-    radial-gradient(1px 1px at 69% 64%, rgba(255,255,255,0.6) 0%, transparent 100%),
-    radial-gradient(2px 2px at 93% 79%, rgba(245,158,11,0.5) 0%, transparent 100%);
-  animation: orbitTwinkle 12s ease-in-out infinite alternate-reverse;
-}
-.orbit-stars-3 {
-  position: absolute;
-  inset: 0;
-  background-image:
-    radial-gradient(1px 1px at 2%  49%, rgba(255,255,255,0.7) 0%, transparent 100%),
-    radial-gradient(1.5px 1.5px at 47% 4%, rgba(255,255,255,0.6) 0%, transparent 100%),
-    radial-gradient(1px 1px at 87% 14%, rgba(59,130,246,0.5) 0%, transparent 100%),
-    radial-gradient(2px 2px at 29% 64%, rgba(255,255,255,0.4) 0%, transparent 100%),
-    radial-gradient(1px 1px at 66% 34%, rgba(255,255,255,0.8) 0%, transparent 100%),
-    radial-gradient(1.5px 1.5px at 54% 96%, rgba(16,185,129,0.55) 0%, transparent 100%);
-  animation: orbitTwinkle 15s ease-in-out infinite alternate;
-}
-@keyframes orbitTwinkle {
-  from { opacity: 0.55; }
-  to   { opacity: 1; }
-}
-
-/* ── Perspective grid ── */
-.orbit-grid {
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(rgba(29,78,216,0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(29,78,216,0.06) 1px, transparent 1px);
-  background-size: 60px 60px;
-  mask-image: radial-gradient(ellipse 80% 80% at center, black 20%, transparent 72%);
-  -webkit-mask-image: radial-gradient(ellipse 80% 80% at center, black 20%, transparent 72%);
-}
-
-/* ── Ambient glows ── */
-.orbit-glow {
+/* Background decorative large rings */
+.lp-bg-ring {
   position: absolute;
   border-radius: 50%;
-  filter: blur(90px);
   pointer-events: none;
+  border: 2px solid;
 }
-.orbit-glow-tl {
+.lp-bg-ring-tl {
+  width: 520px; height: 520px;
+  top: -220px; left: -220px;
+  border-color: rgba(29,78,216,0.08);
+  background: radial-gradient(circle at 40% 40%, rgba(29,78,216,0.04), transparent 65%);
+}
+.lp-bg-ring-br {
   width: 420px; height: 420px;
-  top: -140px; left: -140px;
-  background: rgba(29,78,216,0.1);
+  bottom: -160px; right: -160px;
+  border-color: rgba(5,150,105,0.08);
+  background: radial-gradient(circle at 60% 60%, rgba(5,150,105,0.04), transparent 65%);
 }
-.orbit-glow-br {
-  width: 380px; height: 380px;
-  bottom: -120px; right: -120px;
-  background: rgba(5,150,105,0.1);
+.lp-bg-ring-tr {
+  width: 200px; height: 200px;
+  top: 6%; right: 7%;
+  border-color: rgba(217,119,6,0.1);
+  animation: lpSpin 35s linear infinite;
 }
-
-/* ── Wrapper ── */
-.orbit-wrapper {
-  position: relative;
-  z-index: 10;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1.75rem;
-  width: 100%;
-  max-width: 460px;
-  animation: orbitSlideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-}
-@keyframes orbitSlideUp {
-  from { opacity: 0; transform: translateY(36px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-/* ── Hero ── */
-.orbit-hero {
-  text-align: center;
-}
-
-.orbit-logo-wrap {
-  position: relative;
-  width: 164px;
-  height: 164px;
-  margin: 0 auto 1.1rem;
-}
-
-/* Rotating ring tracks */
-.orbit-ring-track {
-  position: absolute;
-  top: 50%; left: 50%;
-  border-radius: 50%;
-  border: 1px solid;
-  animation: orbitSpin linear infinite;
-}
-.orbit-ring-track-1 {
-  width: 90px; height: 90px;
-  margin: -45px 0 0 -45px;
-  border-color: rgba(59,130,246,0.55);
-  animation-duration: 6s;
-}
-.orbit-ring-track-2 {
-  width: 126px; height: 126px;
-  margin: -63px 0 0 -63px;
-  border-color: rgba(16,185,129,0.45);
-  animation-duration: 11s;
-  animation-direction: reverse;
-}
-.orbit-ring-track-3 {
-  width: 164px; height: 164px;
-  margin: -82px 0 0 -82px;
-  border-color: rgba(245,158,11,0.3);
-  animation-duration: 18s;
-}
-@keyframes orbitSpin {
+@keyframes lpSpin {
   from { transform: rotate(0deg); }
   to   { transform: rotate(360deg); }
 }
 
-/* Orbiting dots on each track */
-.orbit-dot {
+/* ── Two-column container ── */
+.lp-container {
+  position: relative;
+  z-index: 10;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3.5rem;
+  max-width: 1000px;
+  width: 100%;
+  align-items: center;
+  animation: lpReveal 0.75s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes lpReveal {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ════════════════════════════════════
+   BRAND PANEL (LEFT)
+   ════════════════════════════════════ */
+.lp-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 1.5rem;
+}
+
+/* ── Orbital animation ── */
+.lp-orbit-wrap {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  margin: 0 auto;
+}
+
+/* Ring tracks */
+.lp-track {
+  position: absolute;
+  top: 50%; left: 50%;
+  border-radius: 50%;
+  border: 2px solid;
+  animation: lpSpin linear infinite;
+}
+.lp-track-1 {
+  width: 94px; height: 94px;
+  margin: -47px 0 0 -47px;
+  border-color: rgba(29,78,216,0.55);
+  animation-duration: 6s;
+}
+.lp-track-2 {
+  width: 136px; height: 136px;
+  margin: -68px 0 0 -68px;
+  border-color: rgba(5,150,105,0.5);
+  animation-duration: 11s;
+  animation-direction: reverse;
+}
+.lp-track-3 {
+  width: 182px; height: 182px;
+  margin: -91px 0 0 -91px;
+  border-color: rgba(217,119,6,0.45);
+  animation-duration: 18s;
+}
+
+/* Orbiting dots */
+.lp-dot {
   position: absolute;
   top: 50%; left: 50%;
   border-radius: 50%;
 }
-.orbit-dot-cyan {
-  width: 8px; height: 8px;
-  margin: -36px 0 0 -4px;
-  background: #3b82f6;
-  box-shadow: 0 0 8px #3b82f6, 0 0 18px rgba(59,130,246,0.6);
+.lp-dot-blue {
+  width: 11px; height: 11px;
+  margin: -37px 0 0 -5.5px;
+  background: #1d4ed8;
+  box-shadow: 0 0 0 3px #fff, 0 0 10px rgba(29,78,216,0.55);
 }
-.orbit-dot-purple {
-  width: 7px; height: 7px;
-  margin: -66.5px 0 0 -3.5px;
-  background: #10b981;
-  box-shadow: 0 0 8px #10b981, 0 0 18px rgba(16,185,129,0.55);
+.lp-dot-green {
+  width: 10px; height: 10px;
+  margin: -73px 0 0 -5px;
+  background: #059669;
+  box-shadow: 0 0 0 3px #fff, 0 0 10px rgba(5,150,105,0.55);
 }
-.orbit-dot-gold {
-  width: 6px; height: 6px;
-  margin: -85px 0 0 -3px;
-  background: #f59e0b;
-  box-shadow: 0 0 8px #f59e0b, 0 0 16px rgba(245,158,11,0.5);
+.lp-dot-gold {
+  width: 9px; height: 9px;
+  margin: -95.5px 0 0 -4.5px;
+  background: #d97706;
+  box-shadow: 0 0 0 3px #fff, 0 0 10px rgba(217,119,6,0.55);
 }
 
-/* Center planet */
-.orbit-planet {
+/* Center planet — white disc with CM2 logo */
+.lp-planet {
   position: absolute;
   top: 50%; left: 50%;
   transform: translate(-50%, -50%);
-  width: 62px; height: 62px;
+  width: 72px; height: 72px;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, #1e3a8a, #020c1e);
-  border: 1.5px solid rgba(59,130,246,0.6);
+  background: #ffffff;
+  border: 3px solid rgba(29,78,216,0.18);
+  box-shadow:
+    0 4px 18px rgba(29,78,216,0.18),
+    0 0 0 7px rgba(29,78,216,0.05),
+    0 0 0 14px rgba(29,78,216,0.025);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 0 24px rgba(29,78,216,0.4), inset 0 0 16px rgba(59,130,246,0.08);
+  overflow: hidden;
   z-index: 2;
 }
-.orbit-planet span {
-  font-size: 1.85rem;
-  font-weight: 900;
-  color: #fff;
-  font-family: var(--font-heading);
-  letter-spacing: -0.02em;
-  line-height: 1;
+.lp-cm2-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
 }
 
-/* Brand title */
-.orbit-brand {
-  font-size: 3rem;
+/* ── Brand text ── */
+.lp-brand-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+.lp-app-name {
+  font-size: 3.6rem;
   font-weight: 900;
-  letter-spacing: 0.3em;
-  text-transform: uppercase;
+  letter-spacing: 0.38em;
   font-family: var(--font-heading);
-  background: linear-gradient(135deg, #60a5fa 0%, #34d399 40%, #fbbf24 70%, #60a5fa 100%);
-  background-size: 200% auto;
+  text-transform: uppercase;
+  line-height: 1.05;
+  margin: 0;
+  background: linear-gradient(135deg, #1d4ed8 0%, #059669 55%, #d97706 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  animation: orbitShine 5s linear infinite;
-  margin-bottom: 0.3rem;
 }
-@keyframes orbitShine {
-  from { background-position: 0% center; }
-  to   { background-position: 200% center; }
-}
-
-.orbit-tagline {
-  color: rgba(255,255,255,0.38);
-  font-size: 0.72rem;
-  letter-spacing: 0.22em;
+.lp-app-subtitle {
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: var(--dark);
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  font-weight: 600;
+  margin: 0;
+}
+.lp-powered-by {
+  font-size: 0.75rem;
+  color: var(--gray-500);
+  font-weight: 500;
+  margin: 0;
 }
 
-/* ── Glass card ── */
-.orbit-card {
+/* ── Feature pills ── */
+.lp-features {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
   width: 100%;
-  background: rgba(255,255,255,0.04);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(59,130,246,0.22);
-  border-radius: 20px;
+  max-width: 260px;
+}
+.lp-feature-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.6rem 1.1rem;
+  background: rgba(255,255,255,0.85);
+  border: 1px solid rgba(29,78,216,0.1);
+  border-radius: 50px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--dark-light);
+  box-shadow: 0 1px 4px rgba(15,23,42,0.06);
+  transition: box-shadow 0.2s ease;
+}
+.lp-feature-pill:hover {
+  box-shadow: 0 3px 10px rgba(29,78,216,0.12);
+}
+
+/* ════════════════════════════════════
+   FORM CARD (RIGHT)
+   ════════════════════════════════════ */
+.lp-form-col { width: 100%; }
+
+.lp-card {
+  background: #ffffff;
+  border-radius: 24px;
   box-shadow:
-    0 0 0 1px rgba(29,78,216,0.06),
-    0 24px 64px rgba(0,0,0,0.55),
-    inset 0 1px 0 rgba(255,255,255,0.06);
+    0 24px 64px rgba(15,23,42,0.12),
+    0 6px 20px rgba(15,23,42,0.06),
+    0 0 0 1px rgba(29,78,216,0.06);
   overflow: hidden;
 }
 
-/* ── Tabs ── */
-.orbit-tabs {
+/* Card header */
+.lp-card-head {
   display: flex;
-  border-bottom: 1px solid rgba(59,130,246,0.12);
-  background: rgba(0,0,0,0.22);
+  align-items: center;
+  gap: 0.9rem;
+  padding: 1.75rem 1.75rem 0;
+  margin-bottom: 1.5rem;
 }
-.orbit-tab {
+.lp-card-icon {
+  width: 46px; height: 46px;
+  border-radius: 13px;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  color: #fff;
+  font-family: var(--font-heading);
+  font-weight: 900;
+  font-size: 1.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 14px rgba(29,78,216,0.32);
+  flex-shrink: 0;
+  letter-spacing: -0.02em;
+}
+.lp-card-title {
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: var(--dark);
+  font-family: var(--font-heading);
+  margin: 0;
+  line-height: 1.2;
+}
+.lp-card-desc {
+  font-size: 0.82rem;
+  color: var(--gray-500);
+  margin: 0.1rem 0 0;
+  font-weight: 500;
+}
+
+/* Role tabs */
+.lp-tabs-wrap {
+  background: var(--gray-100);
+  border-radius: 12px;
+  padding: 4px;
+  margin: 0 1.75rem 1.5rem;
+}
+.lp-tabs {
+  display: flex;
+  gap: 3px;
+}
+.lp-tab {
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0.15rem;
-  padding: 0.85rem 0.4rem 0.7rem;
-  background: none;
+  padding: 0.6rem 0.4rem;
+  border-radius: 9px;
+  background: transparent;
   border: none;
   cursor: pointer;
-  position: relative;
-  transition: background 0.2s ease;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--gray-500);
+  transition: all 0.22s ease;
+  font-family: var(--font-body);
 }
-.orbit-tab:hover {
-  background: rgba(59,130,246,0.07);
+.lp-tab-icon { font-size: 1.1rem; line-height: 1; }
+.lp-tab:hover:not(.active) {
+  background: rgba(255,255,255,0.8);
+  color: var(--dark);
 }
-.orbit-tab-icon {
-  font-size: 1.15rem;
+.lp-tab.active {
+  background: var(--primary);
+  color: #ffffff;
+  box-shadow: 0 2px 10px rgba(29,78,216,0.32);
+}
+.lp-tab-badge {
+  font-size: 0.58rem;
+  font-weight: 700;
+  color: rgba(255,255,255,0.8);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
   line-height: 1;
 }
-.orbit-tab-label {
-  font-size: 0.68rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: rgba(255,255,255,0.3);
-  transition: color 0.2s ease;
-}
-.orbit-tab:hover .orbit-tab-label {
-  color: rgba(255,255,255,0.65);
-}
-.orbit-tab.active .orbit-tab-label {
-  color: #60a5fa;
-}
-.orbit-tab-role {
-  font-size: 0.58rem;
-  color: #34d399;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  font-weight: 600;
-  animation: orbitFadeIn 0.28s ease;
-}
-@keyframes orbitFadeIn {
-  from { opacity: 0; transform: translateY(3px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-.orbit-tab.active::after {
-  content: '';
-  position: absolute;
-  bottom: -1px;
-  left: 18%; right: 18%;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, #60a5fa, transparent);
-  border-radius: 2px;
-}
 
-/* ── Form ── */
-.orbit-form {
-  padding: 1.75rem 1.75rem 1.25rem;
+/* Form */
+.lp-form {
+  padding: 0 1.75rem 1.25rem;
   display: flex;
   flex-direction: column;
-  gap: 1.1rem;
+  gap: 1rem;
 }
-.orbit-field {
+.lp-field {
   display: flex;
   flex-direction: column;
   gap: 0.38rem;
 }
-.orbit-field label {
-  font-size: 0.68rem;
+.lp-field label {
+  font-size: 0.72rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: rgba(255,255,255,0.38);
+  letter-spacing: 0.1em;
+  color: var(--dark-light);
 }
-.orbit-input-wrap {
+.lp-input-wrap {
   position: relative;
   display: flex;
   align-items: center;
 }
-.orbit-input-icon {
+.lp-input-icon {
   position: absolute;
   left: 13px;
-  color: rgba(96,165,250,0.7);
+  color: var(--primary);
+  opacity: 0.65;
   pointer-events: none;
   flex-shrink: 0;
 }
-.orbit-input-wrap input {
+.lp-input-wrap input {
   width: 100%;
   padding: 0.82rem 2.6rem 0.82rem 2.5rem;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(59,130,246,0.2);
+  background: var(--gray-100);
+  border: 2px solid var(--gray-200);
   border-radius: 10px;
-  color: rgba(255,255,255,0.9);
+  color: var(--dark);
   font-size: 0.93rem;
   font-family: var(--font-body);
-  transition: border-color 0.22s ease, background 0.22s ease, box-shadow 0.22s ease;
+  transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
   outline: none;
 }
-.orbit-input-wrap input::placeholder {
-  color: rgba(255,255,255,0.2);
+.lp-input-wrap input::placeholder { color: var(--gray-400); }
+.lp-input-wrap input:focus {
+  border-color: var(--primary);
+  background: #ffffff;
+  box-shadow: 0 0 0 4px rgba(29,78,216,0.1);
 }
-.orbit-input-wrap input:focus {
-  border-color: rgba(59,130,246,0.6);
-  background: rgba(29,78,216,0.07);
-  box-shadow: 0 0 0 3px rgba(59,130,246,0.12), 0 0 22px rgba(29,78,216,0.08);
-}
-.orbit-eye-btn {
+.lp-eye-btn {
   position: absolute;
   right: 11px;
   background: none;
   border: none;
-  color: rgba(255,255,255,0.3);
+  color: var(--gray-400);
   cursor: pointer;
   padding: 4px;
   display: flex;
   align-items: center;
   transition: color 0.2s ease;
 }
-.orbit-eye-btn:hover {
-  color: #60a5fa;
-}
+.lp-eye-btn:hover { color: var(--primary); }
 
-/* ── Launch button ── */
-.orbit-btn-launch {
-  margin-top: 0.4rem;
+/* Sign-in button */
+.lp-btn-signin {
+  margin-top: 0.25rem;
   width: 100%;
   padding: 0.92rem;
-  background: linear-gradient(135deg, rgba(29,78,216,0.2), rgba(5,150,105,0.15));
-  border: 1px solid rgba(59,130,246,0.45);
-  border-radius: 10px;
-  color: #60a5fa;
-  font-size: 0.92rem;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  border: none;
+  border-radius: 11px;
+  color: #ffffff;
+  font-size: 0.95rem;
   font-weight: 700;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.03em;
   font-family: var(--font-body);
   cursor: pointer;
-  position: relative;
-  overflow: hidden;
-  transition: border-color 0.28s ease, box-shadow 0.28s ease, transform 0.18s ease;
-}
-.orbit-btn-launch::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, rgba(29,78,216,0.25), rgba(5,150,105,0.2));
-  opacity: 0;
-  transition: opacity 0.28s ease;
-}
-.orbit-btn-launch:hover:not(:disabled)::before { opacity: 1; }
-.orbit-btn-launch:hover:not(:disabled) {
-  border-color: rgba(59,130,246,0.7);
-  box-shadow: 0 0 22px rgba(29,78,216,0.25), 0 0 44px rgba(29,78,216,0.1);
-  transform: translateY(-1px);
-}
-.orbit-btn-launch:active:not(:disabled) { transform: translateY(0); }
-.orbit-btn-launch:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-.orbit-btn-inner {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  position: relative;
-  z-index: 1;
+  box-shadow: 0 4px 16px rgba(29,78,216,0.38);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
+.lp-btn-signin:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(29,78,216,0.44);
+}
+.lp-btn-signin:active:not(:disabled) { transform: translateY(0); }
+.lp-btn-signin:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
 
-/* ── Spinner ── */
-.orbit-spinner {
+/* Spinner */
+.lp-spinner {
   width: 17px; height: 17px;
-  border: 2px solid rgba(59,130,246,0.2);
-  border-top-color: #60a5fa;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: #ffffff;
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
   flex-shrink: 0;
 }
 
-/* ── Error ── */
-.orbit-error {
+/* Error */
+.lp-error {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background: rgba(239,68,68,0.09);
-  border: 1px solid rgba(239,68,68,0.28);
-  color: #fc8181;
+  background: var(--danger-light);
+  border: 1px solid rgba(220,38,38,0.2);
+  color: var(--danger);
   padding: 0.65rem 0.9rem;
   border-radius: 8px;
-  font-size: 0.85rem;
-  font-weight: 500;
-  animation: shake 0.38s ease-in-out;
+  font-size: 0.875rem;
+  font-weight: 600;
+  animation: lpShake 0.38s ease-in-out;
 }
-@keyframes shake {
+@keyframes lpShake {
   0%, 100% { transform: translateX(0); }
-  25%       { transform: translateX(-7px); }
-  75%       { transform: translateX(7px); }
+  25%       { transform: translateX(-6px); }
+  75%       { transform: translateX(6px); }
 }
 
-/* ── Card footer ── */
-.orbit-card-footer {
+/* Card footer */
+.lp-card-footer {
   text-align: center;
-  padding: 0.8rem;
-  font-size: 0.67rem;
-  color: rgba(255,255,255,0.18);
-  letter-spacing: 0.06em;
-  border-top: 1px solid rgba(59,130,246,0.08);
+  padding: 0.9rem;
+  font-size: 0.7rem;
+  color: var(--gray-400);
+  border-top: 1px solid var(--gray-100);
+  letter-spacing: 0.04em;
 }
 
 /* ── Responsive ── */
+@media (max-width: 820px) {
+  .lp-container {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    max-width: 460px;
+  }
+  .lp-brand { gap: 1rem; }
+  .lp-orbit-wrap { width: 170px; height: 170px; }
+  .lp-track-1 { width: 80px; height: 80px; margin: -40px 0 0 -40px; }
+  .lp-track-2 { width: 116px; height: 116px; margin: -58px 0 0 -58px; }
+  .lp-track-3 { width: 154px; height: 154px; margin: -77px 0 0 -77px; }
+  .lp-dot-blue  { margin: -30px 0 0 -5.5px; }
+  .lp-dot-green { margin: -63px 0 0 -5px; }
+  .lp-dot-gold  { margin: -81.5px 0 0 -4.5px; }
+  .lp-planet { width: 60px; height: 60px; }
+  .lp-app-name { font-size: 2.8rem; letter-spacing: 0.28em; }
+  .lp-features { flex-direction: row; flex-wrap: wrap; justify-content: center; max-width: 100%; }
+  .lp-bg-ring-tr { display: none; }
+}
 @media (max-width: 480px) {
-  .orbit-logo-wrap { width: 132px; height: 132px; }
-  .orbit-ring-track-1 { width: 72px; height: 72px; margin: -36px 0 0 -36px; }
-  .orbit-ring-track-2 { width: 102px; height: 102px; margin: -51px 0 0 -51px; }
-  .orbit-ring-track-3 { width: 132px; height: 132px; margin: -66px 0 0 -66px; }
-  .orbit-dot-cyan   { margin: -27px 0 0 -4px; }
-  .orbit-dot-purple { margin: -54.5px 0 0 -3.5px; }
-  .orbit-dot-gold   { margin: -69px 0 0 -3px; }
-  .orbit-planet { width: 50px; height: 50px; }
-  .orbit-planet span { font-size: 1.5rem; }
-  .orbit-brand { font-size: 2.4rem; letter-spacing: 0.22em; }
-  .orbit-form { padding: 1.25rem; }
-  .orbit-wrapper { gap: 1.4rem; }
+  .lp-page { padding: 1.5rem 1rem; }
+  .lp-orbit-wrap { width: 140px; height: 140px; }
+  .lp-track-1 { width: 66px; height: 66px; margin: -33px 0 0 -33px; }
+  .lp-track-2 { width: 96px; height: 96px; margin: -48px 0 0 -48px; }
+  .lp-track-3 { width: 128px; height: 128px; margin: -64px 0 0 -64px; }
+  .lp-dot-blue  { margin: -25px 0 0 -5.5px; }
+  .lp-dot-green { margin: -53px 0 0 -5px; }
+  .lp-dot-gold  { margin: -68.5px 0 0 -4.5px; }
+  .lp-planet { width: 50px; height: 50px; }
+  .lp-app-name { font-size: 2.2rem; letter-spacing: 0.22em; }
+  .lp-features { display: none; }
+  .lp-card-head, .lp-form { padding-left: 1.25rem; padding-right: 1.25rem; }
+  .lp-tabs-wrap { margin-left: 1.25rem; margin-right: 1.25rem; }
 }
 
 /* ========================= */

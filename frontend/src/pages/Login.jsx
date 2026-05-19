@@ -4,8 +4,14 @@ import api from '../api';
 
 const tabs = [
   { key: 'camper',    label: 'Camper',    icon: '👪', role: 'Family Portal' },
-  { key: 'counselor', label: 'Counselor', icon: '🛰️', role: 'Navigator' },
-  { key: 'admin',     label: 'Admin',     icon: '⭐', role: 'Commander' },
+  { key: 'counselor', label: 'Counselor', icon: '🛰️', role: 'Navigator'    },
+  { key: 'admin',     label: 'Admin',     icon: '⭐', role: 'Commander'    },
+];
+
+const features = [
+  { icon: '🚀', label: 'Camper Tracking'  },
+  { icon: '🛰️', label: 'Counselor Tools' },
+  { icon: '⭐', label: 'Admin Control'    },
 ];
 
 export default function Login({ onLogin }) {
@@ -37,128 +43,138 @@ export default function Login({ onLogin }) {
   };
 
   return (
-    <div className="orbit-page">
-      {/* Layered starfield */}
-      <div className="orbit-stars" />
-      <div className="orbit-stars orbit-stars-2" />
-      <div className="orbit-stars orbit-stars-3" />
+    <div className="lp-page">
+      {/* Decorative background rings */}
+      <div className="lp-bg-ring lp-bg-ring-tl" />
+      <div className="lp-bg-ring lp-bg-ring-br" />
+      <div className="lp-bg-ring lp-bg-ring-tr" />
 
-      {/* Subtle perspective grid */}
-      <div className="orbit-grid" />
+      <div className="lp-container">
 
-      {/* Ambient glow blobs */}
-      <div className="orbit-glow orbit-glow-tl" />
-      <div className="orbit-glow orbit-glow-br" />
+        {/* ──── LEFT: Brand Panel ──── */}
+        <div className="lp-brand">
 
-      <div className="orbit-wrapper">
-        {/* ── Hero logo ── */}
-        <div className="orbit-hero">
-          <div className="orbit-logo-wrap">
-            {/* Rotating ring tracks */}
-            <div className="orbit-ring-track orbit-ring-track-1">
-              <div className="orbit-dot orbit-dot-cyan" />
-            </div>
-            <div className="orbit-ring-track orbit-ring-track-2">
-              <div className="orbit-dot orbit-dot-purple" />
-            </div>
-            <div className="orbit-ring-track orbit-ring-track-3">
-              <div className="orbit-dot orbit-dot-gold" />
-            </div>
-            {/* Center planet */}
-            <div className="orbit-planet">
-              <span>O</span>
+          {/* Orbital logo animation with CM2 image */}
+          <div className="lp-orbit-wrap">
+            <div className="lp-track lp-track-1"><div className="lp-dot lp-dot-blue" /></div>
+            <div className="lp-track lp-track-2"><div className="lp-dot lp-dot-green" /></div>
+            <div className="lp-track lp-track-3"><div className="lp-dot lp-dot-gold" /></div>
+            <div className="lp-planet">
+              <img src="/CM2 Logo.png" alt="CM2 Logo" className="lp-cm2-logo" />
             </div>
           </div>
 
-          <h1 className="orbit-brand">ORBIT</h1>
-          <p className="orbit-tagline">Camp Management System</p>
-        </div>
+          {/* Brand text */}
+          <div className="lp-brand-text">
+            <h1 className="lp-app-name">ORBIT</h1>
+            <p className="lp-app-subtitle">Camp Management System</p>
+            <p className="lp-powered-by">Powered by CM2 &middot; Extraordinary Youth Summer Camp</p>
+          </div>
 
-        {/* ── Login card ── */}
-        <div className="orbit-card">
-          {/* Role tabs */}
-          <div className="orbit-tabs">
-            {tabs.map((tab) => (
-              <button
-                key={tab.key}
-                className={`orbit-tab ${activeTab === tab.key ? 'active' : ''}`}
-                onClick={() => { setActiveTab(tab.key); setError(''); }}
-              >
-                <span className="orbit-tab-icon">{tab.icon}</span>
-                <span className="orbit-tab-label">{tab.label}</span>
-                {activeTab === tab.key && (
-                  <span className="orbit-tab-role">{tab.role}</span>
-                )}
-              </button>
+          {/* Feature pills */}
+          <div className="lp-features">
+            {features.map((f) => (
+              <div className="lp-feature-pill" key={f.label}>
+                <span>{f.icon}</span>
+                <span>{f.label}</span>
+              </div>
             ))}
           </div>
+        </div>
 
-          <form className="orbit-form" onSubmit={handleSubmit}>
-            {error && (
-              <div className="orbit-error">
-                <span>⚠</span> {error}
-              </div>
-            )}
+        {/* ──── RIGHT: Login Form ──── */}
+        <div className="lp-form-col">
+          <div className="lp-card">
 
-            <div className="orbit-field">
-              <label>Username</label>
-              <div className="orbit-input-wrap">
-                <User size={15} className="orbit-input-icon" />
-                <input
-                  type="text"
-                  placeholder={`Enter ${activeTab} username`}
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  required
-                  autoComplete="username"
-                />
+            {/* Card header */}
+            <div className="lp-card-head">
+              <div className="lp-card-icon">O</div>
+              <div>
+                <h2 className="lp-card-title">Welcome Back</h2>
+                <p className="lp-card-desc">Sign in to your ORBIT account</p>
               </div>
             </div>
 
-            <div className="orbit-field">
-              <label>Password</label>
-              <div className="orbit-input-wrap">
-                <Lock size={15} className="orbit-input-icon" />
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="Enter your password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  autoComplete="current-password"
-                />
-                <button
-                  type="button"
-                  className="orbit-eye-btn"
-                  onClick={() => setShowPassword((v) => !v)}
-                  tabIndex={-1}
-                >
-                  {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
-                </button>
+            {/* Role selector */}
+            <div className="lp-tabs-wrap">
+              <div className="lp-tabs">
+                {tabs.map((tab) => (
+                  <button
+                    key={tab.key}
+                    className={`lp-tab ${activeTab === tab.key ? 'active' : ''}`}
+                    onClick={() => { setActiveTab(tab.key); setError(''); }}
+                  >
+                    <span className="lp-tab-icon">{tab.icon}</span>
+                    <span>{tab.label}</span>
+                    {activeTab === tab.key && (
+                      <span className="lp-tab-badge">{tab.role}</span>
+                    )}
+                  </button>
+                ))}
               </div>
             </div>
 
-            <button className="orbit-btn-launch" type="submit" disabled={loading}>
-              <span className="orbit-btn-inner">
+            {/* Form body */}
+            <form className="lp-form" onSubmit={handleSubmit}>
+              {error && (
+                <div className="lp-error"><span>⚠</span> {error}</div>
+              )}
+
+              <div className="lp-field">
+                <label htmlFor="lp-username">Username</label>
+                <div className="lp-input-wrap">
+                  <User size={16} className="lp-input-icon" />
+                  <input
+                    id="lp-username"
+                    type="text"
+                    placeholder={`Enter ${activeTab} username`}
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    required
+                    autoComplete="username"
+                  />
+                </div>
+              </div>
+
+              <div className="lp-field">
+                <label htmlFor="lp-password">Password</label>
+                <div className="lp-input-wrap">
+                  <Lock size={16} className="lp-input-icon" />
+                  <input
+                    id="lp-password"
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="Enter your password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    autoComplete="current-password"
+                  />
+                  <button
+                    type="button"
+                    className="lp-eye-btn"
+                    onClick={() => setShowPassword((v) => !v)}
+                    tabIndex={-1}
+                  >
+                    {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
+                  </button>
+                </div>
+              </div>
+
+              <button className="lp-btn-signin" type="submit" disabled={loading}>
                 {loading ? (
-                  <>
-                    <span className="orbit-spinner" />
-                    Authenticating…
-                  </>
+                  <><span className="lp-spinner" />Authenticating…</>
                 ) : (
-                  <>
-                    <LogIn size={17} />
-                    Launch as {tabs.find((t) => t.key === activeTab)?.label}
-                  </>
+                  <><LogIn size={17} />Sign In as {tabs.find((t) => t.key === activeTab)?.label}</>
                 )}
-              </span>
-            </button>
-          </form>
+              </button>
+            </form>
 
-          <div className="orbit-card-footer">
-            ORBIT &copy; 2026 &middot; CM2 Summer Camp
+            <div className="lp-card-footer">
+              ORBIT &copy; 2026 &middot; CM2 Summer Camp &middot; All rights reserved
+            </div>
           </div>
         </div>
+
       </div>
     </div>
   );
